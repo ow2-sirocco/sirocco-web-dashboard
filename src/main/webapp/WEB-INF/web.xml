@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	id="WebApp_ID" version="2.5">
+
+	<display-name>SIROCCO::DASHBOARD</display-name>
+	
+	<session-config>
+        <session-timeout>
+            30
+        </session-timeout>
+    </session-config>
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+	
+
+	<listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+    <listener>
+        <listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
+    </listener>
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>/WEB-INF/root-context.xml</param-value>
+    </context-param>
+
+	<servlet>
+		<servlet-name>VaadinServlet</servlet-name>
+        <servlet-class>ru.xpoft.vaadin.SpringVaadinServlet</servlet-class>
+		<init-param>
+            <param-name>beanName</param-name>
+            <param-value>myUI</param-value>
+        </init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>VaadinServlet</servlet-name>
+		<url-pattern>/ui/*</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+        <servlet-name>VaadinServlet</servlet-name>
+        <url-pattern>/VAADIN/*</url-pattern>
+    </servlet-mapping>
+    
+
+	<security-constraint>
+		<web-resource-collection>
+			<web-resource-name>Secure CIMI Content</web-resource-name>
+			<url-pattern>/ui/*</url-pattern>
+		</web-resource-collection>
+		<auth-constraint>
+			<role-name>sirocco-user</role-name>
+		</auth-constraint>
+	</security-constraint>
+
+	<security-role>
+		<role-name>sirocco-user</role-name>
+	</security-role>
+
+	<login-config>
+		<auth-method>FORM</auth-method>
+		<realm-name>jdbc</realm-name>
+		 <form-login-config>
+            <form-login-page>/login.jsp</form-login-page>
+            <form-error-page>/loginError.jsp</form-error-page>
+        </form-login-config>
+	</login-config>
+
+</web-app>
+
+

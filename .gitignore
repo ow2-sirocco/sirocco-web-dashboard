@@ -1,0 +1,7 @@
+*~
+.settings
+.classpath
+.project
+target
+src/main/webapp/VAADIN/gwt-unitCache
+src/main/webapp/VAADIN/widgetsets
