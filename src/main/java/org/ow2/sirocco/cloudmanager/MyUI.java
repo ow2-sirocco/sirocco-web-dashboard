@@ -74,7 +74,13 @@ public class MyUI extends UI {
     private MachineView machineView;
 
     @Autowired
+    private MachineImageView machineImageView;
+
+    @Autowired
     private VolumeView volumeView;
+
+    @Autowired
+    private NetworkView networkView;
 
     @Autowired
     @Qualifier("IUserManager")
@@ -222,9 +228,17 @@ public class MyUI extends UI {
                     MyUI.this.inventoryContainer.replaceComponent(MyUI.this.inventoryContainer.getComponent(0),
                         MyUI.this.machineView);
                     break;
+                case "Images":
+                    MyUI.this.inventoryContainer.replaceComponent(MyUI.this.inventoryContainer.getComponent(0),
+                        MyUI.this.machineImageView);
+                    break;
                 case "Volumes":
                     MyUI.this.inventoryContainer.replaceComponent(MyUI.this.inventoryContainer.getComponent(0),
                         MyUI.this.volumeView);
+                    break;
+                case "Networks":
+                    MyUI.this.inventoryContainer.replaceComponent(MyUI.this.inventoryContainer.getComponent(0),
+                        MyUI.this.networkView);
                     break;
                 }
             }
@@ -299,6 +313,7 @@ public class MyUI extends UI {
                         try {
                             MyUI.this.machineView.pollMachines();
                             MyUI.this.volumeView.pollVolumes();
+                            MyUI.this.networkView.pollNetworks();
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
