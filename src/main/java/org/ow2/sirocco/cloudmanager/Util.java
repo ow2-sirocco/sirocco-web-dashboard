@@ -94,9 +94,11 @@ public class Util {
             Property<?> prop = source.getItem(itemId).getItemProperty(columnId);
             String country = (String) prop.getValue();
             Label label = new Label();
-            String iconFile = country.toLowerCase() + "Flag.png";
-            label.setContentMode(ContentMode.HTML);
-            label.setValue("<img src=\"" + "VAADIN/themes/mytheme/img/" + iconFile + "\" /> " + country);
+            if (country != null && !country.isEmpty()) {
+                String iconFile = country.toLowerCase() + "Flag.png";
+                label.setContentMode(ContentMode.HTML);
+                label.setValue("<img src=\"" + "VAADIN/themes/mytheme/img/" + iconFile + "\" /> " + country);
+            }
             return label;
         }
     }
