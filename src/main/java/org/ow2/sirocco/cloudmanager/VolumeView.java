@@ -259,7 +259,6 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
         this.valueChange(null);
     }
 
-    @SuppressWarnings("serial")
     Table createVolumeTable() {
         this.volumes = new BeanContainer<Integer, VolumeBean>(VolumeBean.class);
         this.volumes.setBeanIdProperty("id");
