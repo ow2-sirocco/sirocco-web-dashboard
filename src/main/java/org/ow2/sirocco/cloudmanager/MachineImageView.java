@@ -26,16 +26,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import javax.inject.Inject;
+
 import org.ow2.sirocco.cloudmanager.core.api.IMachineImageManager;
-import org.ow2.sirocco.cloudmanager.core.api.IdentityContextHolder;
 import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
 import org.ow2.sirocco.cloudmanager.core.api.exception.ResourceNotFoundException;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineImage;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
+import com.vaadin.cdi.UIScoped;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.data.util.BeanContainer;
@@ -47,11 +45,9 @@ import com.vaadin.ui.Button.ClickListener;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.Table;
-import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
-@Component("MachineImageView")
-@Scope("prototype")
+@UIScoped
 public class MachineImageView extends VerticalLayout implements ValueChangeListener {
     private static final long serialVersionUID = 1L;
 
@@ -64,8 +60,7 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
     // @Autowired
     // private MachineImageCreationWizard machineCreationWizard;
 
-    @Autowired
-    @Qualifier("IMachineImageManager")
+    @Inject
     private IMachineImageManager machineImageManager;
 
     public MachineImageView() {
@@ -104,8 +99,6 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
                     @Override
                     public void response(final boolean ok) {
                         if (ok) {
-                            MyUI ui = (MyUI) UI.getCurrent();
-                            IdentityContextHolder.set(ui.getTenantId(), ui.getUserName());
                             for (Object id : selectedImageIds) {
                                 try {
                                     MachineImageView.this.machineImageManager.deleteMachineImage(id.toString());
@@ -164,8 +157,6 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
     void refresh() {
         this.machineImageTable.getContainerDataSource().removeAllItems();
         try {
-            MyUI ui = (MyUI) UI.getCurrent();
-            IdentityContextHolder.set(ui.getTenantId(), ui.getUserName());
             for (MachineImage machineImage : this.machineImageManager.getMachineImages()) {
                 System.out.println("MachineImage id=" + machineImage.getId() + " name=" + machineImage.getName());
                 this.images.addBean(new MachineImageBean(machineImage));

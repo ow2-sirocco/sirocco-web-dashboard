@@ -25,19 +25,17 @@ package org.ow2.sirocco.cloudmanager;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.servlet.http.HttpServletRequest;
+import javax.inject.Inject;
 
 import org.ow2.sirocco.cloudmanager.core.api.IUserManager;
+import org.ow2.sirocco.cloudmanager.core.api.IdentityContext;
 import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.Tenant;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.User;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import com.vaadin.annotations.Push;
 import com.vaadin.annotations.Theme;
+import com.vaadin.cdi.CDIUI;
 import com.vaadin.data.Property;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
@@ -45,6 +43,7 @@ import com.vaadin.server.Resource;
 import com.vaadin.server.ThemeResource;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinService;
+import com.vaadin.server.VaadinServletService;
 import com.vaadin.shared.communication.PushMode;
 import com.vaadin.ui.Accordion;
 import com.vaadin.ui.Button;
@@ -59,32 +58,30 @@ import com.vaadin.ui.Tree;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
-@Component
-@Scope("prototype")
+@CDIUI
 @Theme("mytheme")
 @Push(PushMode.MANUAL)
 @SuppressWarnings("serial")
 public class MyUI extends UI {
     private VerticalLayout inventoryContainer;
 
-    @Autowired
-    private HttpServletRequest request;
-
-    @Autowired
+    @Inject
     private MachineView machineView;
 
-    @Autowired
+    @Inject
     private MachineImageView machineImageView;
 
-    @Autowired
+    @Inject
     private VolumeView volumeView;
 
-    @Autowired
+    @Inject
     private NetworkView networkView;
 
-    @Autowired
-    @Qualifier("IUserManager")
+    @Inject
     private IUserManager userManager;
+
+    @Inject
+    private IdentityContext identityContext;
 
     private String userName;
 
@@ -96,6 +93,11 @@ public class MyUI extends UI {
 
     @Override
     protected void init(final VaadinRequest request) {
+        this.userName = request.getUserPrincipal().getName();
+        this.tenantId = "1";
+        this.identityContext.setUserName(this.userName);
+        this.identityContext.setTenantId(this.tenantId);
+
         this.getPage().setTitle("Sirocco Dashboard");
         final VerticalLayout layout = new VerticalLayout();
         layout.setSizeFull();
@@ -269,7 +271,7 @@ public class MyUI extends UI {
     }
 
     public String getTenantId() {
-        return "1";
+        return this.tenantId;
     }
 
     @Override
@@ -288,7 +290,7 @@ public class MyUI extends UI {
         VaadinService.getCurrentRequest().getWrappedSession().invalidate();
 
         // Redirect to avoid keeping the removed UI open in the browser
-        this.getUI().getPage().setLocation(this.request.getContextPath() + "/logout.jsp");
+        this.getUI().getPage().setLocation(VaadinServletService.getCurrentServletRequest().getContextPath() + "/logout.jsp");
     }
 
     class Poller implements Runnable {

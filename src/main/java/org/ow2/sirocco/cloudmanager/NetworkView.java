@@ -26,17 +26,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import javax.inject.Inject;
+
 import org.ow2.sirocco.cloudmanager.core.api.INetworkManager;
-import org.ow2.sirocco.cloudmanager.core.api.IdentityContextHolder;
 import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
 import org.ow2.sirocco.cloudmanager.core.api.exception.ResourceNotFoundException;
 import org.ow2.sirocco.cloudmanager.model.cimi.Network;
 import org.ow2.sirocco.cloudmanager.model.cimi.Subnet;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
+import com.vaadin.cdi.UIScoped;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.data.util.BeanContainer;
@@ -51,8 +49,7 @@ import com.vaadin.ui.Table;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
-@Component("NetworkView")
-@Scope("prototype")
+@UIScoped
 public class NetworkView extends VerticalLayout implements ValueChangeListener {
     private static final long serialVersionUID = 1L;
 
@@ -62,11 +59,10 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
 
     BeanContainer<Integer, NetworkBean> networks;
 
-    @Autowired
+    @Inject
     private NetworkCreationWizard networkCreationWizard;
 
-    @Autowired
-    @Qualifier("INetworkManager")
+    @Inject
     private INetworkManager networkManager;
 
     public NetworkView() {
@@ -105,8 +101,6 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
                     @Override
                     public void response(final boolean ok) {
                         if (ok) {
-                            MyUI ui = (MyUI) UI.getCurrent();
-                            IdentityContextHolder.set(ui.getTenantId(), ui.getUserName());
                             for (Object id : selectedNetworkIds) {
                                 try {
                                     NetworkView.this.networkManager.deleteNetwork(id.toString());
@@ -164,8 +158,6 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
     void refresh() {
         this.networkTable.getContainerDataSource().removeAllItems();
         try {
-            MyUI ui = (MyUI) UI.getCurrent();
-            IdentityContextHolder.set(ui.getTenantId(), ui.getUserName());
             for (Network network : this.networkManager.getNetworks()) {
                 System.out.println("Network id=" + network.getId() + " name=" + network.getName());
                 this.networks.addBean(new NetworkBean(network));

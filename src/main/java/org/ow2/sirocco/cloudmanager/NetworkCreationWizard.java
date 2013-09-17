@@ -26,10 +26,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import org.ow2.sirocco.cloudmanager.NetworkView.NetworkBean;
 import org.ow2.sirocco.cloudmanager.core.api.ICloudProviderManager;
 import org.ow2.sirocco.cloudmanager.core.api.INetworkManager;
-import org.ow2.sirocco.cloudmanager.core.api.IdentityContextHolder;
 import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
 import org.ow2.sirocco.cloudmanager.model.cimi.Job;
 import org.ow2.sirocco.cloudmanager.model.cimi.Network;
@@ -40,9 +41,6 @@ import org.ow2.sirocco.cloudmanager.model.cimi.NetworkTemplate;
 import org.ow2.sirocco.cloudmanager.model.cimi.Subnet;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProvider;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProviderAccount;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Scope;
 import org.vaadin.teemu.wizards.Wizard;
 import org.vaadin.teemu.wizards.WizardStep;
 import org.vaadin.teemu.wizards.event.WizardCancelledEvent;
@@ -51,6 +49,7 @@ import org.vaadin.teemu.wizards.event.WizardProgressListener;
 import org.vaadin.teemu.wizards.event.WizardStepActivationEvent;
 import org.vaadin.teemu.wizards.event.WizardStepSetChangedEvent;
 
+import com.vaadin.cdi.UIScoped;
 import com.vaadin.data.Property;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.ui.Alignment;
@@ -62,8 +61,7 @@ import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
 
-@org.springframework.stereotype.Component("NetworkCreationWizard")
-@Scope("prototype")
+@UIScoped
 @SuppressWarnings("serial")
 public class NetworkCreationWizard extends Window implements WizardProgressListener {
     private NetworkView networkView;
@@ -76,12 +74,10 @@ public class NetworkCreationWizard extends Window implements WizardProgressListe
 
     private SubnetStep subnetStep;
 
-    @Autowired
-    @Qualifier("ICloudProviderManager")
+    @Inject
     private ICloudProviderManager providerManager;
 
-    @Autowired
-    @Qualifier("INetworkManager")
+    @Inject
     private INetworkManager networkManager;
 
     public NetworkCreationWizard() {
@@ -111,9 +107,6 @@ public class NetworkCreationWizard extends Window implements WizardProgressListe
         this.wizard.setUriFragmentEnabled(false);
         this.wizard.activateStep(this.placementStep);
         String tenantId = ((MyUI) UI.getCurrent()).getTenantId();
-
-        MyUI ui = (MyUI) UI.getCurrent();
-        IdentityContextHolder.set(ui.getTenantId(), ui.getUserName());
 
         this.placementStep.providerBox.removeAllItems();
         try {
@@ -173,8 +166,6 @@ public class NetworkCreationWizard extends Window implements WizardProgressListe
 
             networkCreate.setNetworkTemplate(networkTemplate);
 
-            MyUI ui = (MyUI) UI.getCurrent();
-            IdentityContextHolder.set(ui.getTenantId(), ui.getUserName());
             Job job = this.networkManager.createNetwork(networkCreate);
             Network newNetwork = (Network) job.getAffectedResources().get(0);
 

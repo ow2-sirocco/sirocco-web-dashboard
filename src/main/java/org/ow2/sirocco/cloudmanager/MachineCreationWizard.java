@@ -26,13 +26,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import org.ow2.sirocco.cloudmanager.MachineView.MachineBean;
 import org.ow2.sirocco.cloudmanager.core.api.ICloudProviderManager;
 import org.ow2.sirocco.cloudmanager.core.api.ICredentialsManager;
 import org.ow2.sirocco.cloudmanager.core.api.IMachineImageManager;
 import org.ow2.sirocco.cloudmanager.core.api.IMachineManager;
 import org.ow2.sirocco.cloudmanager.core.api.INetworkManager;
-import org.ow2.sirocco.cloudmanager.core.api.IdentityContextHolder;
 import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
 import org.ow2.sirocco.cloudmanager.model.cimi.Credentials;
 import org.ow2.sirocco.cloudmanager.model.cimi.Job;
@@ -45,9 +46,6 @@ import org.ow2.sirocco.cloudmanager.model.cimi.MachineTemplateNetworkInterface;
 import org.ow2.sirocco.cloudmanager.model.cimi.Network;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProvider;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProviderAccount;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Scope;
 import org.vaadin.teemu.wizards.Wizard;
 import org.vaadin.teemu.wizards.WizardStep;
 import org.vaadin.teemu.wizards.event.WizardCancelledEvent;
@@ -56,6 +54,7 @@ import org.vaadin.teemu.wizards.event.WizardProgressListener;
 import org.vaadin.teemu.wizards.event.WizardStepActivationEvent;
 import org.vaadin.teemu.wizards.event.WizardStepSetChangedEvent;
 
+import com.vaadin.cdi.UIScoped;
 import com.vaadin.data.Property;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.util.BeanContainer;
@@ -78,8 +77,7 @@ import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
 
-@org.springframework.stereotype.Component("MachineCreationWizard")
-@Scope("prototype")
+@UIScoped
 @SuppressWarnings("serial")
 public class MachineCreationWizard extends Window implements WizardProgressListener {
     private MachineView machineView;
@@ -100,24 +98,19 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
 
     private UserDataStep userDataStep;
 
-    @Autowired
-    @Qualifier("ICloudProviderManager")
+    @Inject
     private ICloudProviderManager providerManager;
 
-    @Autowired
-    @Qualifier("IMachineManager")
+    @Inject
     private IMachineManager machineManager;
 
-    @Autowired
-    @Qualifier("IMachineImageManager")
+    @Inject
     private IMachineImageManager machineImageManager;
 
-    @Autowired
-    @Qualifier("ICredentialsManager")
+    @Inject
     private ICredentialsManager credentialsManager;
 
-    @Autowired
-    @Qualifier("INetworkManager")
+    @Inject
     private INetworkManager networkManager;
 
     public MachineCreationWizard() {
@@ -151,9 +144,6 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
         this.wizard.setUriFragmentEnabled(false);
         this.wizard.activateStep(this.placementStep);
         String tenantId = ((MyUI) UI.getCurrent()).getTenantId();
-
-        MyUI ui = (MyUI) UI.getCurrent();
-        IdentityContextHolder.set(ui.getTenantId(), ui.getUserName());
 
         this.placementStep.providerBox.removeAllItems();
         try {
@@ -226,71 +216,60 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
     public void wizardCompleted(final WizardCompletedEvent event) {
         this.close();
 
-        class Task extends Thread {
-            @Override
-            public void run() {
-                MachineCreate machineCreate = new MachineCreate();
-                machineCreate.setProperties(new HashMap<String, String>());
+        MachineCreate machineCreate = new MachineCreate();
+        machineCreate.setProperties(new HashMap<String, String>());
 
-                try {
-                    Integer id = (Integer) MachineCreationWizard.this.placementStep.providerBox.getValue();
-                    CloudProvider provider = MachineCreationWizard.this.providerManager.getCloudProviderById(id.toString());
-                    machineCreate.getProperties().put("provider", provider.getCloudProviderType());
-                    machineCreate.getProperties().put("location",
-                        (String) MachineCreationWizard.this.placementStep.locationBox.getValue());
-                    machineCreate.setName(MachineCreationWizard.this.metadataStep.nameField.getValue());
-                    machineCreate.setDescription(MachineCreationWizard.this.metadataStep.descriptionField.getValue());
-                    if (machineCreate.getDescription().isEmpty()) {
-                        machineCreate.setDescription(null);
-                    }
-                    MachineTemplate machineTemplate = new MachineTemplate();
-                    MachineConfiguration machineConfig = MachineCreationWizard.this.machineManager
-                        .getMachineConfigurationById(((Integer) MachineCreationWizard.this.configStep.configBox.getValue())
-                            .toString());
-                    machineTemplate.setMachineConfig(machineConfig);
-                    MachineImage machineImage = MachineCreationWizard.this.machineImageManager
-                        .getMachineImageById(((Integer) MachineCreationWizard.this.imageStep.imageBox.getValue()).toString());
-                    machineTemplate.setMachineImage(machineImage);
-
-                    // network interfaces
-                    List<MachineTemplateNetworkInterface> nics = new ArrayList<>();
-                    machineTemplate.setNetworkInterfaces(nics);
-                    for (Object itemId : MachineCreationWizard.this.networkStep.nicTable.getItemIds()) {
-                        NicBean nicBean = MachineCreationWizard.this.networkStep.nics.getItem(itemId).getBean();
-                        MachineTemplateNetworkInterface nic = new MachineTemplateNetworkInterface();
-                        nic.setNetwork(nicBean.net);
-                        nics.add(nic);
-                    }
-
-                    if (MachineCreationWizard.this.keyPairStep.keyPairBox.getValue() != null) {
-                        Credentials cred = MachineCreationWizard.this.credentialsManager
-                            .getCredentialsById(((Integer) MachineCreationWizard.this.keyPairStep.keyPairBox.getValue())
-                                .toString());
-                        machineTemplate.setCredential(cred);
-                    }
-
-                    machineTemplate.setUserData(MachineCreationWizard.this.userDataStep.userDataField.getValue());
-                    if (machineTemplate.getUserData().isEmpty()) {
-                        machineTemplate.setUserData(null);
-                    }
-
-                    machineCreate.setMachineTemplate(machineTemplate);
-
-                    MyUI ui = (MyUI) UI.getCurrent();
-                    IdentityContextHolder.set(ui.getTenantId(), ui.getUserName());
-                    Job job = MachineCreationWizard.this.machineManager.createMachine(machineCreate);
-                    Machine newMachine = (Machine) job.getAffectedResources().get(0);
-
-                    MachineCreationWizard.this.machineView.machines.addBeanAt(0, new MachineBean(newMachine));
-
-                    ui.push();
-                } catch (CloudProviderException e) {
-                    e.printStackTrace();
-                }
+        try {
+            Integer id = (Integer) MachineCreationWizard.this.placementStep.providerBox.getValue();
+            CloudProvider provider = MachineCreationWizard.this.providerManager.getCloudProviderById(id.toString());
+            machineCreate.getProperties().put("provider", provider.getCloudProviderType());
+            machineCreate.getProperties().put("location",
+                (String) MachineCreationWizard.this.placementStep.locationBox.getValue());
+            machineCreate.setName(MachineCreationWizard.this.metadataStep.nameField.getValue());
+            machineCreate.setDescription(MachineCreationWizard.this.metadataStep.descriptionField.getValue());
+            if (machineCreate.getDescription().isEmpty()) {
+                machineCreate.setDescription(null);
             }
-        }
+            MachineTemplate machineTemplate = new MachineTemplate();
+            MachineConfiguration machineConfig = MachineCreationWizard.this.machineManager
+                .getMachineConfigurationById(((Integer) MachineCreationWizard.this.configStep.configBox.getValue()).toString());
+            machineTemplate.setMachineConfig(machineConfig);
+            MachineImage machineImage = MachineCreationWizard.this.machineImageManager
+                .getMachineImageById(((Integer) MachineCreationWizard.this.imageStep.imageBox.getValue()).toString());
+            machineTemplate.setMachineImage(machineImage);
 
-        new Task().start();
+            // network interfaces
+            List<MachineTemplateNetworkInterface> nics = new ArrayList<>();
+            machineTemplate.setNetworkInterfaces(nics);
+            for (Object itemId : MachineCreationWizard.this.networkStep.nicTable.getItemIds()) {
+                NicBean nicBean = MachineCreationWizard.this.networkStep.nics.getItem(itemId).getBean();
+                MachineTemplateNetworkInterface nic = new MachineTemplateNetworkInterface();
+                nic.setNetwork(nicBean.net);
+                nics.add(nic);
+            }
+
+            if (MachineCreationWizard.this.keyPairStep.keyPairBox.getValue() != null) {
+                Credentials cred = MachineCreationWizard.this.credentialsManager
+                    .getCredentialsById(((Integer) MachineCreationWizard.this.keyPairStep.keyPairBox.getValue()).toString());
+                machineTemplate.setCredential(cred);
+            }
+
+            machineTemplate.setUserData(MachineCreationWizard.this.userDataStep.userDataField.getValue());
+            if (machineTemplate.getUserData().isEmpty()) {
+                machineTemplate.setUserData(null);
+            }
+
+            machineCreate.setMachineTemplate(machineTemplate);
+
+            Job job = MachineCreationWizard.this.machineManager.createMachine(machineCreate);
+            Machine newMachine = (Machine) job.getAffectedResources().get(0);
+
+            MachineCreationWizard.this.machineView.machines.addBeanAt(0, new MachineBean(newMachine));
+
+            UI.getCurrent().push();
+        } catch (CloudProviderException e) {
+            e.printStackTrace();
+        }
 
     }
 

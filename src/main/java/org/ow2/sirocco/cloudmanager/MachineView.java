@@ -26,19 +26,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import javax.inject.Inject;
+
 import org.ow2.sirocco.cloudmanager.core.api.IMachineManager;
-import org.ow2.sirocco.cloudmanager.core.api.IdentityContextHolder;
+import org.ow2.sirocco.cloudmanager.core.api.IdentityContext;
 import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
 import org.ow2.sirocco.cloudmanager.core.api.exception.ResourceNotFoundException;
 import org.ow2.sirocco.cloudmanager.model.cimi.Machine;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineDisk;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineNetworkInterface;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineNetworkInterfaceAddress;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
+import com.vaadin.cdi.UIScoped;
 import com.vaadin.data.Property;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
@@ -54,8 +53,7 @@ import com.vaadin.ui.Table;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
-@Component("MachineView")
-@Scope("prototype")
+@UIScoped
 public class MachineView extends VerticalLayout implements ValueChangeListener {
     private static final long serialVersionUID = 1L;
 
@@ -71,12 +69,14 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
 
     BeanContainer<Integer, MachineBean> machines;
 
-    @Autowired
+    @Inject
     private MachineCreationWizard machineCreationWizard;
 
-    @Autowired
-    @Qualifier("IMachineManager")
+    @Inject
     private IMachineManager machineManager;
+
+    @Inject
+    IdentityContext identityContext;
 
     public MachineView() {
         this.setSizeFull();
@@ -108,8 +108,6 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
             public void buttonClick(final ClickEvent event) {
                 Set<?> selectedMachineIds = (Set<?>) MachineView.this.machineTable.getValue();
                 Integer id = (Integer) selectedMachineIds.iterator().next();
-                MyUI ui = (MyUI) UI.getCurrent();
-                IdentityContextHolder.set(ui.getTenantId(), ui.getUserName());
                 try {
                     MachineView.this.machineManager.startMachine(id.toString());
                     Machine machine = MachineView.this.machineManager.getMachineById(id.toString());
@@ -134,8 +132,6 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
             public void buttonClick(final ClickEvent event) {
                 Set<?> selectedMachineIds = (Set<?>) MachineView.this.machineTable.getValue();
                 Integer id = (Integer) selectedMachineIds.iterator().next();
-                MyUI ui = (MyUI) UI.getCurrent();
-                IdentityContextHolder.set(ui.getTenantId(), ui.getUserName());
                 try {
                     MachineView.this.machineManager.stopMachine(id.toString());
                     Machine machine = MachineView.this.machineManager.getMachineById(id.toString());
@@ -160,8 +156,6 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
             public void buttonClick(final ClickEvent event) {
                 Set<?> selectedMachineIds = (Set<?>) MachineView.this.machineTable.getValue();
                 Integer id = (Integer) selectedMachineIds.iterator().next();
-                MyUI ui = (MyUI) UI.getCurrent();
-                IdentityContextHolder.set(ui.getTenantId(), ui.getUserName());
                 try {
                     MachineView.this.machineManager.restartMachine(id.toString(), false);
                 } catch (CloudProviderException e) {
@@ -186,8 +180,6 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
                     @Override
                     public void response(final boolean ok) {
                         if (ok) {
-                            MyUI ui = (MyUI) UI.getCurrent();
-                            IdentityContextHolder.set(ui.getTenantId(), ui.getUserName());
                             for (Object id : selectedMachineIds) {
                                 try {
                                     MachineView.this.machineManager.deleteMachine(id.toString());
@@ -243,10 +235,9 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
     }
 
     void refresh() {
+        System.out.println("REFRESH " + this.identityContext.getTenantId());
         this.machineTable.getContainerDataSource().removeAllItems();
         try {
-            MyUI ui = (MyUI) UI.getCurrent();
-            IdentityContextHolder.set(ui.getTenantId(), ui.getUserName());
             for (Machine machine : this.machineManager.getMachines()) {
                 System.out.println("Machine id=" + machine.getId() + " name=" + machine.getName());
                 this.machines.addBean(new MachineBean(machine));

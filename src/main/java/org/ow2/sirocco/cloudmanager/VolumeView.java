@@ -26,20 +26,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import javax.inject.Inject;
+
 import org.ow2.sirocco.cloudmanager.VolumeAttachDialog.MachineChoice;
 import org.ow2.sirocco.cloudmanager.core.api.IMachineManager;
 import org.ow2.sirocco.cloudmanager.core.api.IVolumeManager;
-import org.ow2.sirocco.cloudmanager.core.api.IdentityContextHolder;
 import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
 import org.ow2.sirocco.cloudmanager.core.api.exception.ResourceNotFoundException;
 import org.ow2.sirocco.cloudmanager.model.cimi.Machine;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineVolume;
 import org.ow2.sirocco.cloudmanager.model.cimi.Volume;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
+import com.vaadin.cdi.UIScoped;
 import com.vaadin.data.Item;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
@@ -54,8 +52,7 @@ import com.vaadin.ui.Table;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
-@Component("VolumeView")
-@Scope("prototype")
+@UIScoped
 public class VolumeView extends VerticalLayout implements ValueChangeListener {
     private static final long serialVersionUID = 1L;
 
@@ -69,15 +66,13 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
 
     BeanContainer<Integer, VolumeBean> volumes;
 
-    @Autowired
+    @Inject
     private VolumeCreationWizard volumeCreationWizard;
 
-    @Autowired
-    @Qualifier("IVolumeManager")
+    @Inject
     private IVolumeManager volumeManager;
 
-    @Autowired
-    @Qualifier("IMachineManager")
+    @Inject
     private IMachineManager machineManager;
 
     public VolumeView() {
@@ -112,8 +107,6 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
                 List<VolumeAttachDialog.MachineChoice> choices = new ArrayList<>();
                 Volume volume;
                 try {
-                    MyUI ui = (MyUI) UI.getCurrent();
-                    IdentityContextHolder.set(ui.getTenantId(), ui.getUserName());
                     volume = VolumeView.this.volumeManager.getVolumeById(volumeId.toString());
                     List<Machine> machines = VolumeView.this.machineManager.getMachines();
                     for (Machine machine : machines) {
@@ -135,9 +128,6 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
 
                         @Override
                         public void response(final Integer machineId, final String location) {
-                            MyUI ui = (MyUI) UI.getCurrent();
-                            IdentityContextHolder.set(ui.getTenantId(), ui.getUserName());
-
                             try {
                                 Volume volume = VolumeView.this.volumeManager.getVolumeById(volumeId.toString());
                                 MachineVolume volumeAttachment = new MachineVolume();
@@ -202,8 +192,6 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
                     @Override
                     public void response(final boolean ok) {
                         if (ok) {
-                            MyUI ui = (MyUI) UI.getCurrent();
-                            IdentityContextHolder.set(ui.getTenantId(), ui.getUserName());
                             for (Object id : selectedVolumeIds) {
                                 try {
                                     VolumeView.this.volumeManager.deleteVolume(id.toString());
@@ -248,8 +236,6 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
     void refresh() {
         this.volumeTable.getContainerDataSource().removeAllItems();
         try {
-            MyUI ui = (MyUI) UI.getCurrent();
-            IdentityContextHolder.set(ui.getTenantId(), ui.getUserName());
             for (Volume volume : this.volumeManager.getVolumes()) {
                 this.volumes.addBean(new VolumeBean(volume));
             }

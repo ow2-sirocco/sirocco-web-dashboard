@@ -16,23 +16,16 @@
     </welcome-file-list>
 	
 
-	<listener>
-        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
-    </listener>
-    <listener>
-        <listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
-    </listener>
-    <context-param>
-        <param-name>contextConfigLocation</param-name>
-        <param-value>/WEB-INF/root-context.xml</param-value>
-    </context-param>
-
 	<servlet>
 		<servlet-name>VaadinServlet</servlet-name>
-        <servlet-class>ru.xpoft.vaadin.SpringVaadinServlet</servlet-class>
-		<init-param>
-            <param-name>beanName</param-name>
-            <param-value>myUI</param-value>
+        <servlet-class>com.vaadin.server.VaadinServlet</servlet-class>
+		<!-- <init-param>
+            <param-name>UI</param-name>
+            <param-value>org.ow2.sirocco.cloudmanager.MyUI</param-value>
+        </init-param> -->
+        <init-param>
+            <param-name>UIProvider</param-name>
+            <param-value>com.vaadin.cdi.CDIUIProvider</param-value>
         </init-param>
 		<load-on-startup>1</load-on-startup>
 	</servlet>

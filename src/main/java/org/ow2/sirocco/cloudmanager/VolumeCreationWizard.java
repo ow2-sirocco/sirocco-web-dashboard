@@ -24,10 +24,11 @@ package org.ow2.sirocco.cloudmanager;
 
 import java.util.HashMap;
 
+import javax.inject.Inject;
+
 import org.ow2.sirocco.cloudmanager.VolumeView.VolumeBean;
 import org.ow2.sirocco.cloudmanager.core.api.ICloudProviderManager;
 import org.ow2.sirocco.cloudmanager.core.api.IVolumeManager;
-import org.ow2.sirocco.cloudmanager.core.api.IdentityContextHolder;
 import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
 import org.ow2.sirocco.cloudmanager.model.cimi.Job;
 import org.ow2.sirocco.cloudmanager.model.cimi.Volume;
@@ -36,9 +37,6 @@ import org.ow2.sirocco.cloudmanager.model.cimi.VolumeCreate;
 import org.ow2.sirocco.cloudmanager.model.cimi.VolumeTemplate;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProvider;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProviderAccount;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Scope;
 import org.vaadin.teemu.wizards.Wizard;
 import org.vaadin.teemu.wizards.WizardStep;
 import org.vaadin.teemu.wizards.event.WizardCancelledEvent;
@@ -47,6 +45,7 @@ import org.vaadin.teemu.wizards.event.WizardProgressListener;
 import org.vaadin.teemu.wizards.event.WizardStepActivationEvent;
 import org.vaadin.teemu.wizards.event.WizardStepSetChangedEvent;
 
+import com.vaadin.cdi.UIScoped;
 import com.vaadin.data.Property;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.server.UserError;
@@ -58,8 +57,7 @@ import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
 
-@org.springframework.stereotype.Component("VolumeCreationWizard")
-@Scope("prototype")
+@UIScoped
 @SuppressWarnings("serial")
 public class VolumeCreationWizard extends Window implements WizardProgressListener {
     private VolumeView volumeView;
@@ -72,12 +70,10 @@ public class VolumeCreationWizard extends Window implements WizardProgressListen
 
     private ConfigStep configStep;
 
-    @Autowired
-    @Qualifier("ICloudProviderManager")
+    @Inject
     private ICloudProviderManager providerManager;
 
-    @Autowired
-    @Qualifier("IVolumeManager")
+    @Inject
     private IVolumeManager volumeManager;
 
     public VolumeCreationWizard() {
@@ -107,9 +103,6 @@ public class VolumeCreationWizard extends Window implements WizardProgressListen
         this.wizard.setUriFragmentEnabled(false);
         this.wizard.activateStep(this.placementStep);
         String tenantId = ((MyUI) UI.getCurrent()).getTenantId();
-
-        MyUI ui = (MyUI) UI.getCurrent();
-        IdentityContextHolder.set(ui.getTenantId(), ui.getUserName());
 
         this.placementStep.providerBox.removeAllItems();
         try {
@@ -163,8 +156,6 @@ public class VolumeCreationWizard extends Window implements WizardProgressListen
 
             volumeCreate.setVolumeTemplate(volumeTemplate);
 
-            MyUI ui = (MyUI) UI.getCurrent();
-            IdentityContextHolder.set(ui.getTenantId(), ui.getUserName());
             Job job = this.volumeManager.createVolume(volumeCreate);
             Volume newVolume = (Volume) job.getAffectedResources().get(0);
 

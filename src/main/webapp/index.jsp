@@ -1,3 +1,3 @@
 <%
-	response.sendRedirect("ui/");
+	response.sendRedirect("ui");
 %>
