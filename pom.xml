@@ -263,4 +263,11 @@
 			</plugins>
 		</pluginManagement>
 	</build>
+	
+	<scm>
+		<connection>scm:git:git://github.com/ow2-sirocco/sirocco-web-dashboard.git</connection>
+		<developerConnection>scm:git:git@github.com:ow2-sirocco/sirocco-web-dashboard.git</developerConnection>
+		<url>https://github.com/ow2-sirocco/sirocco-web-dashboard</url>
+		<tag>HEAD</tag>
+   	</scm>
 </project>
