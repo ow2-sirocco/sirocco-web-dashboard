@@ -39,7 +39,6 @@ import org.ow2.sirocco.cloudmanager.model.cimi.NetworkConfiguration;
 import org.ow2.sirocco.cloudmanager.model.cimi.NetworkCreate;
 import org.ow2.sirocco.cloudmanager.model.cimi.NetworkTemplate;
 import org.ow2.sirocco.cloudmanager.model.cimi.Subnet;
-import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProvider;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProviderAccount;
 import org.vaadin.teemu.wizards.Wizard;
 import org.vaadin.teemu.wizards.WizardStep;
@@ -112,8 +111,8 @@ public class NetworkCreationWizard extends Window implements WizardProgressListe
         try {
             this.placementStep.setProviderManager(this.providerManager);
             for (CloudProviderAccount providerAccount : this.providerManager.getCloudProviderAccountsByTenant(tenantId)) {
-                this.placementStep.providerBox.addItem(providerAccount.getCloudProvider().getId());
-                this.placementStep.providerBox.setItemCaption(providerAccount.getCloudProvider().getId(), providerAccount
+                this.placementStep.providerBox.addItem(providerAccount.getId().toString());
+                this.placementStep.providerBox.setItemCaption(providerAccount.getId().toString(), providerAccount
                     .getCloudProvider().getDescription());
             }
         } catch (CloudProviderException e) {
@@ -143,9 +142,8 @@ public class NetworkCreationWizard extends Window implements WizardProgressListe
         networkCreate.setProperties(new HashMap<String, String>());
 
         try {
-            Integer id = (Integer) this.placementStep.providerBox.getValue();
-            CloudProvider provider = this.providerManager.getCloudProviderById(id.toString());
-            networkCreate.getProperties().put("provider", provider.getCloudProviderType());
+            String accountId = (String) this.placementStep.providerBox.getValue();
+            networkCreate.getProperties().put("providerAccountId", accountId);
             networkCreate.getProperties().put("location", (String) this.placementStep.locationBox.getValue());
             networkCreate.setName(this.metadataStep.nameField.getValue());
             networkCreate.setDescription(this.metadataStep.descriptionField.getValue());

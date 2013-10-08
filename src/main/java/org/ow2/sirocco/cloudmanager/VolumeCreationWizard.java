@@ -35,7 +35,6 @@ import org.ow2.sirocco.cloudmanager.model.cimi.Volume;
 import org.ow2.sirocco.cloudmanager.model.cimi.VolumeConfiguration;
 import org.ow2.sirocco.cloudmanager.model.cimi.VolumeCreate;
 import org.ow2.sirocco.cloudmanager.model.cimi.VolumeTemplate;
-import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProvider;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProviderAccount;
 import org.vaadin.teemu.wizards.Wizard;
 import org.vaadin.teemu.wizards.WizardStep;
@@ -108,8 +107,8 @@ public class VolumeCreationWizard extends Window implements WizardProgressListen
         try {
             this.placementStep.setProviderManager(this.providerManager);
             for (CloudProviderAccount providerAccount : this.providerManager.getCloudProviderAccountsByTenant(tenantId)) {
-                this.placementStep.providerBox.addItem(providerAccount.getCloudProvider().getId());
-                this.placementStep.providerBox.setItemCaption(providerAccount.getCloudProvider().getId(), providerAccount
+                this.placementStep.providerBox.addItem(providerAccount.getId().toString());
+                this.placementStep.providerBox.setItemCaption(providerAccount.getId().toString(), providerAccount
                     .getCloudProvider().getDescription());
             }
         } catch (CloudProviderException e) {
@@ -139,9 +138,8 @@ public class VolumeCreationWizard extends Window implements WizardProgressListen
         volumeCreate.setProperties(new HashMap<String, String>());
 
         try {
-            Integer id = (Integer) this.placementStep.providerBox.getValue();
-            CloudProvider provider = this.providerManager.getCloudProviderById(id.toString());
-            volumeCreate.getProperties().put("provider", provider.getCloudProviderType());
+            String accountId = (String) this.placementStep.providerBox.getValue();
+            volumeCreate.getProperties().put("providerAccountId", accountId);
             volumeCreate.getProperties().put("location", (String) this.placementStep.locationBox.getValue());
             volumeCreate.setName(this.metadataStep.nameField.getValue());
             volumeCreate.setDescription(this.metadataStep.descriptionField.getValue());

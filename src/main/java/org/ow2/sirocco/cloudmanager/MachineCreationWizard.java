@@ -44,8 +44,8 @@ import org.ow2.sirocco.cloudmanager.model.cimi.MachineImage;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineTemplate;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineTemplateNetworkInterface;
 import org.ow2.sirocco.cloudmanager.model.cimi.Network;
-import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProvider;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProviderAccount;
+import org.ow2.sirocco.cloudmanager.model.cimi.extension.ProviderMapping;
 import org.vaadin.teemu.wizards.Wizard;
 import org.vaadin.teemu.wizards.WizardStep;
 import org.vaadin.teemu.wizards.event.WizardCancelledEvent;
@@ -125,6 +125,13 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
         this.wizard = new Wizard();
         this.wizard.addListener(this);
         this.wizard.addStep(this.placementStep = new Util.PlacementStep(this.wizard), "placement");
+        this.placementStep.setListener(new Property.ValueChangeListener() {
+
+            @Override
+            public void valueChange(final ValueChangeEvent event) {
+                MachineCreationWizard.this.updateProviderSpecificResources();
+            }
+        });
         this.wizard.addStep(this.metadataStep = new Util.MetadataStep(this.wizard), "metadata");
         this.wizard.addStep(this.imageStep = new ImageStep(), "Image");
         this.wizard.addStep(this.configStep = new ConfigStep(), "Hardware");
@@ -149,8 +156,8 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
         try {
             this.placementStep.setProviderManager(this.providerManager);
             for (CloudProviderAccount providerAccount : this.providerManager.getCloudProviderAccountsByTenant(tenantId)) {
-                this.placementStep.providerBox.addItem(providerAccount.getCloudProvider().getId());
-                this.placementStep.providerBox.setItemCaption(providerAccount.getCloudProvider().getId(), providerAccount
+                this.placementStep.providerBox.addItem(providerAccount.getId().toString());
+                this.placementStep.providerBox.setItemCaption(providerAccount.getId().toString(), providerAccount
                     .getCloudProvider().getDescription());
             }
         } catch (CloudProviderException e) {
@@ -159,35 +166,6 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
 
         this.metadataStep.nameField.setValue("");
         this.metadataStep.descriptionField.setValue("");
-
-        this.imageStep.imageBox.removeAllItems();
-        try {
-            for (MachineImage image : this.machineImageManager.getMachineImages()) {
-                this.imageStep.imageBox.addItem(image.getId());
-                this.imageStep.imageBox.setItemCaption(image.getId(), image.getDescription());
-            }
-        } catch (CloudProviderException e) {
-            e.printStackTrace();
-        }
-
-        this.configStep.configBox.removeAllItems();
-        try {
-            for (MachineConfiguration config : this.machineManager.getMachineConfigurations()) {
-                this.configStep.configBox.addItem(config.getId());
-                this.configStep.configBox.setItemCaption(config.getId(), config.getDescription());
-            }
-        } catch (CloudProviderException e) {
-            e.printStackTrace();
-        }
-
-        this.networkStep.nics.removeAllItems();
-        try {
-            for (Network net : this.networkManager.getNetworks()) {
-                this.networkStep.nets.addBean(new NetBean(net));
-            }
-        } catch (CloudProviderException e) {
-            e.printStackTrace();
-        }
 
         this.keyPairStep.keyPairBox.removeAllItems();
         try {
@@ -198,7 +176,50 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
         } catch (CloudProviderException e) {
             e.printStackTrace();
         }
+        this.updateProviderSpecificResources();
+    }
 
+    private void updateProviderSpecificResources() {
+        this.imageStep.imageBox.removeAllItems();
+        try {
+            for (MachineImage image : this.machineImageManager.getMachineImages()) {
+                ProviderMapping mapping = ProviderMapping.find(image, this.getSelectedProviderAccountId(),
+                    this.getSelectedCountry());
+                if (mapping == null) {
+                    continue;
+                }
+                this.imageStep.imageBox.addItem(image.getId());
+                this.imageStep.imageBox.setItemCaption(image.getId(), image.getName());
+            }
+        } catch (CloudProviderException e) {
+            e.printStackTrace();
+        }
+        this.configStep.configBox.removeAllItems();
+        try {
+            for (MachineConfiguration config : this.machineManager.getMachineConfigurations()) {
+                ProviderMapping mapping = ProviderMapping.find(config, this.getSelectedProviderAccountId(),
+                    this.getSelectedCountry());
+                if (mapping == null) {
+                    continue;
+                }
+                this.configStep.configBox.addItem(config.getId());
+                this.configStep.configBox.setItemCaption(config.getId(), config.getName());
+            }
+        } catch (CloudProviderException e) {
+            e.printStackTrace();
+        }
+        this.networkStep.nics.removeAllItems();
+        this.networkStep.nets.removeAllItems();
+        try {
+            for (Network net : this.networkManager.getNetworks()) {
+                if (net.getCloudProviderAccount().getId().toString().equals(this.getSelectedProviderAccountId())
+                    && net.getLocation().getCountryName().equals(this.getSelectedCountry())) {
+                    this.networkStep.nets.addBean(new NetBean(net));
+                }
+            }
+        } catch (CloudProviderException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -212,6 +233,14 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
     public void stepSetChanged(final WizardStepSetChangedEvent event) {
     }
 
+    private String getSelectedProviderAccountId() {
+        return (String) MachineCreationWizard.this.placementStep.providerBox.getValue();
+    }
+
+    private String getSelectedCountry() {
+        return (String) MachineCreationWizard.this.placementStep.locationBox.getValue();
+    }
+
     @Override
     public void wizardCompleted(final WizardCompletedEvent event) {
         this.close();
@@ -220,11 +249,9 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
         machineCreate.setProperties(new HashMap<String, String>());
 
         try {
-            Integer id = (Integer) MachineCreationWizard.this.placementStep.providerBox.getValue();
-            CloudProvider provider = MachineCreationWizard.this.providerManager.getCloudProviderById(id.toString());
-            machineCreate.getProperties().put("provider", provider.getCloudProviderType());
-            machineCreate.getProperties().put("location",
-                (String) MachineCreationWizard.this.placementStep.locationBox.getValue());
+            String accountId = this.getSelectedProviderAccountId();
+            machineCreate.getProperties().put("providerAccountId", accountId);
+            machineCreate.getProperties().put("location", this.getSelectedCountry());
             machineCreate.setName(MachineCreationWizard.this.metadataStep.nameField.getValue());
             machineCreate.setDescription(MachineCreationWizard.this.metadataStep.descriptionField.getValue());
             if (machineCreate.getDescription().isEmpty()) {
@@ -410,8 +437,6 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
                     AbstractSelectTargetDetails dropData = ((AbstractSelectTargetDetails) event.getTargetDetails());
                     Integer targetItemId = (Integer) dropData.getItemIdOver();
                     VerticalDropLocation location = dropData.getDropLocation();
-
-                    System.out.println("DROP netId=" + netId + " targetId=" + targetItemId + " loc=" + location);
 
                     if (targetItemId == null) {
                         NetworkStep.this.nics.addBean(new NicBean(NetworkStep.this.nets.getItem(netId).getBean().net));
