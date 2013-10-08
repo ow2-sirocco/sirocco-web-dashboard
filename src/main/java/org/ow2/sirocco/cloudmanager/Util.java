@@ -24,7 +24,7 @@ package org.ow2.sirocco.cloudmanager;
 
 import org.ow2.sirocco.cloudmanager.core.api.ICloudProviderManager;
 import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
-import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProvider;
+import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProviderAccount;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProviderLocation;
 import org.vaadin.teemu.wizards.Wizard;
 import org.vaadin.teemu.wizards.WizardStep;
@@ -112,6 +112,8 @@ public class Util {
 
         private ICloudProviderManager providerManager;
 
+        private Property.ValueChangeListener listener;
+
         PlacementStep(final Wizard wizard) {
             this.content = new FormLayout();
             this.content.setSizeFull();
@@ -130,20 +132,25 @@ public class Util {
                     PlacementStep.this.locationBox.removeAllItems();
                     if (PlacementStep.this.providerBox.getValue() != null) {
                         try {
-                            Integer id = (Integer) PlacementStep.this.providerBox.getValue();
-                            CloudProvider provider = PlacementStep.this.providerManager.getCloudProviderById(id.toString());
-                            for (CloudProviderLocation location : provider.getCloudProviderLocations()) {
+                            String accountId = (String) PlacementStep.this.providerBox.getValue();
+                            CloudProviderAccount providerAccount = PlacementStep.this.providerManager
+                                .getCloudProviderAccountById(accountId);
+                            for (CloudProviderLocation location : providerAccount.getCloudProvider()
+                                .getCloudProviderLocations()) {
                                 PlacementStep.this.locationBox.addItem(location.getCountryName());
                             }
                             if (PlacementStep.this.locationBox.getItemIds().size() == 1) {
-                                PlacementStep.this.locationBox.setValue(provider.getCloudProviderLocations().iterator().next()
-                                    .getCountryName());
+                                PlacementStep.this.locationBox.setValue(providerAccount.getCloudProvider()
+                                    .getCloudProviderLocations().iterator().next().getCountryName());
                             }
                         } catch (CloudProviderException e) {
                             e.printStackTrace();
                         }
                     }
                     wizard.updateButtons();
+                    if (PlacementStep.this.listener != null && PlacementStep.this.locationBox.getValue() != null) {
+                        PlacementStep.this.listener.valueChange(event);
+                    }
                 }
             });
             this.content.addComponent(this.providerBox);
@@ -159,6 +166,10 @@ public class Util {
                 @Override
                 public void valueChange(final ValueChangeEvent event) {
                     wizard.updateButtons();
+                    if (PlacementStep.this.listener != null && PlacementStep.this.locationBox.getValue() != null
+                        && PlacementStep.this.providerBox.getValue() != null) {
+                        PlacementStep.this.listener.valueChange(event);
+                    }
                 }
             });
             Label spacer = new Label();
@@ -169,6 +180,10 @@ public class Util {
 
         void setProviderManager(final ICloudProviderManager providerManager) {
             this.providerManager = providerManager;
+        }
+
+        public void setListener(final Property.ValueChangeListener listener) {
+            this.listener = listener;
         }
 
         @Override
