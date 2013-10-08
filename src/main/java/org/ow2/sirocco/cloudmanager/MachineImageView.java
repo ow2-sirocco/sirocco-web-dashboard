@@ -32,6 +32,7 @@ import org.ow2.sirocco.cloudmanager.core.api.IMachineImageManager;
 import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
 import org.ow2.sirocco.cloudmanager.core.api.exception.ResourceNotFoundException;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineImage;
+import org.ow2.sirocco.cloudmanager.model.cimi.extension.ProviderMapping;
 
 import com.vaadin.cdi.UIScoped;
 import com.vaadin.data.Property.ValueChangeEvent;
@@ -322,16 +323,14 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
         }
 
         public String providerFrom(final MachineImage machineImage) {
-            if (machineImage.getCloudProviderAccount() != null) {
-                return machineImage.getCloudProviderAccount().getCloudProvider().getDescription();
-            } else {
-                return "";
-            }
+            ProviderMapping mapping = machineImage.getProviderMappings().get(0);
+            return mapping.getProviderAccount().getCloudProvider().getDescription();
         }
 
         public String locationFrom(final MachineImage machineImage) {
-            if (machineImage.getLocation() != null) {
-                return machineImage.getLocation().getCountryName();
+            ProviderMapping mapping = machineImage.getProviderMappings().get(0);
+            if (mapping.getProviderLocation() != null) {
+                return mapping.getProviderLocation().getCountryName();
             } else {
                 return "";
             }
