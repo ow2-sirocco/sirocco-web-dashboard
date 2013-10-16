@@ -45,7 +45,6 @@ import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinService;
 import com.vaadin.server.VaadinServletService;
 import com.vaadin.shared.communication.PushMode;
-import com.vaadin.ui.Accordion;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.ComboBox;
@@ -76,6 +75,12 @@ public class MyUI extends UI {
 
     @Inject
     private NetworkView networkView;
+
+    @Inject
+    private CloudProviderView providerView;
+
+    @Inject
+    private KeyPairView keyPairView;
 
     @Inject
     private IUserManager userManager;
@@ -195,74 +200,117 @@ public class MyUI extends UI {
 
     }
 
-    Accordion createLeftMenu() {
-        Accordion accordion = new Accordion();
-        accordion.setStyleName("menuTitle");
-        accordion.setSizeFull();
-        accordion.addTab(this.createResourceTree(), "Resources", null);
-        accordion.addTab(this.createProviderTree(), "Providers", null);
-        accordion.addTab(this.createUserTree(), "Users & Tenants", null);
-        return accordion;
-    }
+    private static final String PROVIDERS_MENU_ITEM_ID = "Providers";
 
-    Tree createResourceTree() {
-        final Tree resourceTree = new Tree("Resources");
-        resourceTree.setSizeFull();
-        resourceTree.addItem("Machines");
-        resourceTree.setChildrenAllowed("Machines", false);
-        resourceTree.addItem("Images");
-        resourceTree.setChildrenAllowed("Images", false);
-        resourceTree.addItem("Volumes");
-        resourceTree.setChildrenAllowed("Volumes", false);
-        resourceTree.addItem("Networks");
-        resourceTree.setChildrenAllowed("Networks", false);
-        resourceTree.addItem("KeyPairs");
-        resourceTree.setChildrenAllowed("KeyPairs", false);
+    private static final String COMPUTE_MENU_ITEM_ID = "Compute";
 
-        resourceTree.select("Machines");
+    private static final String INSTANCES_MENU_ITEM_ID = "Instances";
+
+    private static final String IMAGES_MENU_ITEM_ID = "Images";
+
+    private static final String STORAGE_MENU_ITEM_ID = "Block storage";
+
+    private static final String VOLUMES_MENU_ITEM_ID = "Volumes";
+
+    private static final String NETWORKING_MENU_ITEM_ID = "Networking";
+
+    private static final String NETWORKS_MENU_ITEM_ID = "Networks";
+
+    private static final String SECURITY_MENU_ITEM_ID = "Security";
+
+    private static final String KEYPAIRS_MENU_ITEM_ID = "KeyPairs";
+
+    Tree createLeftMenu() {
+        final Tree resourceTree = new Tree("Root");
+        resourceTree.setStyleName("myTree");
         resourceTree.setImmediate(true);
+        resourceTree.setSizeFull();
+        resourceTree.addItem(MyUI.PROVIDERS_MENU_ITEM_ID);
+        resourceTree.setItemIcon(MyUI.PROVIDERS_MENU_ITEM_ID, new ThemeResource("img/cloud.png"));
+        resourceTree.setChildrenAllowed(MyUI.PROVIDERS_MENU_ITEM_ID, false);
+
+        // resourceTree.addItem(MyUI.COMPUTE_MENU_ITEM_ID);
+
+        resourceTree.addItem(MyUI.INSTANCES_MENU_ITEM_ID);
+        resourceTree.setItemIcon(MyUI.INSTANCES_MENU_ITEM_ID, new ThemeResource("img/server.png"));
+        resourceTree.setChildrenAllowed(MyUI.INSTANCES_MENU_ITEM_ID, false);
+        // resourceTree.setParent(MyUI.INSTANCES_MENU_ITEM_ID, MyUI.COMPUTE_MENU_ITEM_ID);
+
+        resourceTree.addItem(MyUI.IMAGES_MENU_ITEM_ID);
+        resourceTree.setItemIcon(MyUI.IMAGES_MENU_ITEM_ID, new ThemeResource("img/image.png"));
+        resourceTree.setItemCaption(MyUI.IMAGES_MENU_ITEM_ID, "  Images");
+        resourceTree.setChildrenAllowed(MyUI.IMAGES_MENU_ITEM_ID, false);
+        // resourceTree.setParent(MyUI.IMAGES_MENU_ITEM_ID, MyUI.COMPUTE_MENU_ITEM_ID);
+
+        // resourceTree.addItem(MyUI.STORAGE_MENU_ITEM_ID);
+
+        resourceTree.addItem(MyUI.VOLUMES_MENU_ITEM_ID);
+        resourceTree.setItemIcon(MyUI.VOLUMES_MENU_ITEM_ID, new ThemeResource("img/disk.png"));
+        resourceTree.setItemCaption(MyUI.VOLUMES_MENU_ITEM_ID, "  Volumes");
+        resourceTree.setChildrenAllowed(MyUI.VOLUMES_MENU_ITEM_ID, false);
+        // resourceTree.setParent(MyUI.VOLUMES_MENU_ITEM_ID, MyUI.STORAGE_MENU_ITEM_ID);
+
+        // resourceTree.addItem(MyUI.NETWORKING_MENU_ITEM_ID);
+
+        resourceTree.addItem(MyUI.NETWORKS_MENU_ITEM_ID);
+        resourceTree.setItemIcon(MyUI.NETWORKS_MENU_ITEM_ID, new ThemeResource("img/network.png"));
+        resourceTree.setChildrenAllowed(MyUI.NETWORKS_MENU_ITEM_ID, false);
+        // resourceTree.setParent(MyUI.NETWORKS_MENU_ITEM_ID, MyUI.NETWORKING_MENU_ITEM_ID);
+
+        // resourceTree.addItem(MyUI.SECURITY_MENU_ITEM_ID);
+
+        resourceTree.addItem(MyUI.KEYPAIRS_MENU_ITEM_ID);
+        resourceTree.setItemIcon(MyUI.KEYPAIRS_MENU_ITEM_ID, new ThemeResource("img/key.png"));
+        resourceTree.setChildrenAllowed(MyUI.KEYPAIRS_MENU_ITEM_ID, false);
+        // resourceTree.setParent(MyUI.KEYPAIRS_MENU_ITEM_ID, MyUI.SECURITY_MENU_ITEM_ID);
+
+        // resourceTree.expandItemsRecursively(MyUI.COMPUTE_MENU_ITEM_ID);
+        // resourceTree.expandItemsRecursively(MyUI.STORAGE_MENU_ITEM_ID);
+        // resourceTree.expandItemsRecursively(MyUI.NETWORKING_MENU_ITEM_ID);
+        // resourceTree.expandItemsRecursively(MyUI.SECURITY_MENU_ITEM_ID);
+
+        resourceTree.select(MyUI.INSTANCES_MENU_ITEM_ID);
+
         resourceTree.addValueChangeListener(new ValueChangeListener() {
+            Object previous = null;
 
             @Override
             public void valueChange(final ValueChangeEvent event) {
-                switch ((String) resourceTree.getValue()) {
-                case "Machines":
-                    MyUI.this.inventoryContainer.replaceComponent(MyUI.this.inventoryContainer.getComponent(0),
-                        MyUI.this.machineView);
-                    break;
-                case "Images":
-                    MyUI.this.inventoryContainer.replaceComponent(MyUI.this.inventoryContainer.getComponent(0),
-                        MyUI.this.machineImageView);
-                    break;
-                case "Volumes":
-                    MyUI.this.inventoryContainer.replaceComponent(MyUI.this.inventoryContainer.getComponent(0),
-                        MyUI.this.volumeView);
-                    break;
-                case "Networks":
-                    MyUI.this.inventoryContainer.replaceComponent(MyUI.this.inventoryContainer.getComponent(0),
-                        MyUI.this.networkView);
-                    break;
+                if (resourceTree.getValue() != null) {
+                    if (resourceTree.hasChildren(resourceTree.getValue())) {
+                        resourceTree.setValue(this.previous);
+                    } else {
+                        this.previous = resourceTree.getValue();
+                        switch ((String) resourceTree.getValue()) {
+                        case PROVIDERS_MENU_ITEM_ID:
+                            MyUI.this.inventoryContainer.replaceComponent(MyUI.this.inventoryContainer.getComponent(0),
+                                MyUI.this.providerView);
+                            break;
+                        case INSTANCES_MENU_ITEM_ID:
+                            MyUI.this.inventoryContainer.replaceComponent(MyUI.this.inventoryContainer.getComponent(0),
+                                MyUI.this.machineView);
+                            break;
+                        case IMAGES_MENU_ITEM_ID:
+                            MyUI.this.inventoryContainer.replaceComponent(MyUI.this.inventoryContainer.getComponent(0),
+                                MyUI.this.machineImageView);
+                            break;
+                        case VOLUMES_MENU_ITEM_ID:
+                            MyUI.this.inventoryContainer.replaceComponent(MyUI.this.inventoryContainer.getComponent(0),
+                                MyUI.this.volumeView);
+                            break;
+                        case NETWORKS_MENU_ITEM_ID:
+                            MyUI.this.inventoryContainer.replaceComponent(MyUI.this.inventoryContainer.getComponent(0),
+                                MyUI.this.networkView);
+                            break;
+                        case KEYPAIRS_MENU_ITEM_ID:
+                            MyUI.this.inventoryContainer.replaceComponent(MyUI.this.inventoryContainer.getComponent(0),
+                                MyUI.this.keyPairView);
+                            break;
+                        }
+                    }
                 }
             }
         });
-        return resourceTree;
-    }
-
-    Tree createProviderTree() {
-        Tree resourceTree = new Tree("Providers");
-        resourceTree.setSizeFull();
-        resourceTree.addItem("Providers");
-        resourceTree.setChildrenAllowed("Providers", false);
-        return resourceTree;
-    }
-
-    Tree createUserTree() {
-        Tree resourceTree = new Tree("Users");
-        resourceTree.setSizeFull();
-        resourceTree.addItem("Users");
-        resourceTree.setChildrenAllowed("Users", false);
-        resourceTree.addItem("Tenants");
-        resourceTree.setChildrenAllowed("Tenants", false);
         return resourceTree;
     }
 
@@ -278,7 +326,6 @@ public class MyUI extends UI {
     public void detach() {
         this.pollingTask.cancel();
         this.executorService.shutdownNow();
-        System.out.println("DETACHED");
         super.detach();
     }
 
