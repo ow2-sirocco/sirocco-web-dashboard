@@ -22,6 +22,9 @@
  */
 package org.ow2.sirocco.cloudmanager;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 import org.ow2.sirocco.cloudmanager.core.api.ICloudProviderManager;
 import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProviderAccount;
@@ -38,9 +41,14 @@ import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.FormLayout;
 import com.vaadin.ui.Label;
+import com.vaadin.ui.Panel;
 import com.vaadin.ui.Table;
 import com.vaadin.ui.TextArea;
 import com.vaadin.ui.TextField;
+
+import de.steinwedel.messagebox.ButtonId;
+import de.steinwedel.messagebox.Icon;
+import de.steinwedel.messagebox.MessageBox;
 
 public class Util {
     public static String printKibibytesValue(final int val) {
@@ -95,9 +103,9 @@ public class Util {
             String country = (String) prop.getValue();
             Label label = new Label();
             if (country != null && !country.isEmpty()) {
-                String iconFile = country.toLowerCase() + "Flag.png";
+                String iconFile = country.toLowerCase() + ".gif";
                 label.setContentMode(ContentMode.HTML);
-                label.setValue("<img src=\"" + "VAADIN/themes/mytheme/img/" + iconFile + "\" /> " + country);
+                label.setValue("<img src=\"" + "VAADIN/themes/mytheme/img/flags/" + iconFile + "\" /> ");
             }
             return label;
         }
@@ -259,6 +267,15 @@ public class Util {
             return true;
         }
 
+    }
+
+    public static void diplayErrorMessageBox(final String message, final Exception e) {
+        Panel p = new Panel();
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        p.setContent(new Label(sw.toString()));
+        MessageBox mb = MessageBox.showCustomized(Icon.ERROR, message, p, ButtonId.OK).setWidth("700px").setHeight("350px");
     }
 
 }
