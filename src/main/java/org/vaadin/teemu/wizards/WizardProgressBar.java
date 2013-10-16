@@ -8,74 +8,75 @@ import org.vaadin.teemu.wizards.event.WizardProgressListener;
 import org.vaadin.teemu.wizards.event.WizardStepActivationEvent;
 import org.vaadin.teemu.wizards.event.WizardStepSetChangedEvent;
 
-import com.vaadin.annotations.StyleSheet;
 import com.vaadin.ui.CustomComponent;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
-import com.vaadin.ui.ProgressIndicator;
+import com.vaadin.ui.ProgressBar;
 import com.vaadin.ui.VerticalLayout;
 
 /**
  * Displays a progress bar for a {@link Wizard}.
  */
 @SuppressWarnings("serial")
-@StyleSheet("wizard-progress-bar.css")
-public class WizardProgressBar extends CustomComponent implements
-        WizardProgressListener {
+// @StyleSheet("wizard-progress-bar.css")
+public class WizardProgressBar extends CustomComponent implements WizardProgressListener {
 
     private final Wizard wizard;
-    private final ProgressIndicator progressBar = new ProgressIndicator();
+
+    private final ProgressBar progressBar = new ProgressBar();
+
     private final HorizontalLayout stepCaptions = new HorizontalLayout();
+
     private int activeStepIndex;
 
-    public WizardProgressBar(Wizard wizard) {
-        setStyleName("wizard-progress-bar");
+    public WizardProgressBar(final Wizard wizard) {
+        this.setStyleName("wizard-progress-bar");
         this.wizard = wizard;
 
-        stepCaptions.setWidth("100%");
-        progressBar.setWidth("100%");
-        progressBar.setHeight("13px");
+        this.stepCaptions.setWidth("100%");
+        this.progressBar.setWidth("100%");
+        this.progressBar.setHeight("13px");
 
         VerticalLayout layout = new VerticalLayout();
         layout.setWidth("100%");
-        layout.addComponent(stepCaptions);
-        layout.addComponent(progressBar);
-        setCompositionRoot(layout);
-        setWidth("100%");
+        layout.addComponent(this.stepCaptions);
+        layout.addComponent(this.progressBar);
+        this.setCompositionRoot(layout);
+        this.setWidth("100%");
     }
 
     private void updateProgressBar() {
-        int stepCount = wizard.getSteps().size();
+        int stepCount = this.wizard.getSteps().size();
         float padding = (1.0f / stepCount) / 2;
-        float progressValue = padding + activeStepIndex / (float) stepCount;
-        progressBar.setValue(progressValue);
+        float progressValue = padding + this.activeStepIndex / (float) stepCount;
+        this.progressBar.setValue(progressValue);
     }
 
     private void updateStepCaptions() {
-        stepCaptions.removeAllComponents();
+        this.stepCaptions.removeAllComponents();
         int index = 1;
-        for (WizardStep step : wizard.getSteps()) {
-            Label label = createCaptionLabel(index, step);
-            stepCaptions.addComponent(label);
+        for (WizardStep step : this.wizard.getSteps()) {
+            Label label = this.createCaptionLabel(index, step);
+            this.stepCaptions.addComponent(label);
             index++;
         }
     }
 
-    private Label createCaptionLabel(int index, WizardStep step) {
+    private Label createCaptionLabel(final int index, final WizardStep step) {
         Label label = new Label(index + ". " + step.getCaption());
         label.addStyleName("step-caption");
 
         // Add styles for themeing.
-        if (wizard.isCompleted(step)) {
+        if (this.wizard.isCompleted(step)) {
             label.addStyleName("completed");
         }
-        if (wizard.isActive(step)) {
+        if (this.wizard.isActive(step)) {
             label.addStyleName("current");
         }
-        if (wizard.isFirstStep(step)) {
+        if (this.wizard.isFirstStep(step)) {
             label.addStyleName("first");
         }
-        if (wizard.isLastStep(step)) {
+        if (this.wizard.isLastStep(step)) {
             label.addStyleName("last");
         }
 
@@ -83,30 +84,30 @@ public class WizardProgressBar extends CustomComponent implements
     }
 
     private void updateProgressAndCaptions() {
-        updateProgressBar();
-        updateStepCaptions();
+        this.updateProgressBar();
+        this.updateStepCaptions();
     }
 
     @Override
-    public void activeStepChanged(WizardStepActivationEvent event) {
-        List<WizardStep> allSteps = wizard.getSteps();
-        activeStepIndex = allSteps.indexOf(event.getActivatedStep());
-        updateProgressAndCaptions();
+    public void activeStepChanged(final WizardStepActivationEvent event) {
+        List<WizardStep> allSteps = this.wizard.getSteps();
+        this.activeStepIndex = allSteps.indexOf(event.getActivatedStep());
+        this.updateProgressAndCaptions();
     }
 
     @Override
-    public void stepSetChanged(WizardStepSetChangedEvent event) {
-        updateProgressAndCaptions();
+    public void stepSetChanged(final WizardStepSetChangedEvent event) {
+        this.updateProgressAndCaptions();
     }
 
     @Override
-    public void wizardCompleted(WizardCompletedEvent event) {
-        progressBar.setValue(1.0f);
-        updateStepCaptions();
+    public void wizardCompleted(final WizardCompletedEvent event) {
+        this.progressBar.setValue(1.0f);
+        this.updateStepCaptions();
     }
 
     @Override
-    public void wizardCancelled(WizardCancelledEvent event) {
+    public void wizardCancelled(final WizardCancelledEvent event) {
         // NOP, no need to react to cancellation
     }
 }
