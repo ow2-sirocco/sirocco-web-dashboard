@@ -35,7 +35,6 @@ import org.ow2.sirocco.cloudmanager.core.api.exception.ResourceNotFoundException
 import org.ow2.sirocco.cloudmanager.model.cimi.Machine;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineDisk;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineNetworkInterface;
-import org.ow2.sirocco.cloudmanager.model.cimi.MachineNetworkInterfaceAddress;
 
 import com.vaadin.cdi.UIScoped;
 import com.vaadin.data.Property;
@@ -87,7 +86,7 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
         actionButtonHeader.setWidth("100%");
         actionButtonHeader.setHeight("50px");
 
-        Button button = new Button("Create Machine...");
+        Button button = new Button("Launch Instance...");
         button.setIcon(new ThemeResource("img/add.png"));
         button.addClickListener(new ClickListener() {
 
@@ -117,7 +116,7 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
                     MachineView.this.machines.addBeanAt(index, newMachineBean);
                     MachineView.this.valueChange(null);
                 } catch (CloudProviderException e) {
-                    e.printStackTrace();
+                    Util.diplayErrorMessageBox("Cannot start instance", e);
                 }
             }
         });
@@ -141,7 +140,7 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
                     MachineView.this.machines.addBeanAt(index, newMachineBean);
                     MachineView.this.valueChange(null);
                 } catch (CloudProviderException e) {
-                    e.printStackTrace();
+                    Util.diplayErrorMessageBox("Cannot stop instance", e);
                 }
             }
         });
@@ -159,7 +158,7 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
                 try {
                     MachineView.this.machineManager.restartMachine(id.toString(), false);
                 } catch (CloudProviderException e) {
-                    e.printStackTrace();
+                    Util.diplayErrorMessageBox("Cannot reboot instance", e);
                 }
             }
         });
@@ -189,7 +188,7 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
                                     MachineView.this.machines.removeItem(id);
                                     MachineView.this.machines.addBeanAt(index, newMachineBean);
                                 } catch (CloudProviderException e) {
-                                    e.printStackTrace();
+                                    Util.diplayErrorMessageBox("Cannot delete instance", e);
                                 }
                             }
                             MachineView.this.valueChange(null);
@@ -220,22 +219,9 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
         this.addComponent(this.machineTable = this.createMachineTable());
         this.setExpandRatio(this.machineTable, 1.0f);
 
-        // refresh();
-    }
-
-    Label createLabel(final String iconFileName, final String text) {
-        Label label = new Label();
-        label.setContentMode(ContentMode.HTML);
-        label.setValue("<img src=\"" + "VAADIN/themes/mytheme/img/" + iconFileName + "\" /> " + text);
-        return label;
-    }
-
-    Label makeCountryLabel(final String country) {
-        return this.createLabel(country.toLowerCase() + "Flag.png", "");
     }
 
     void refresh() {
-        System.out.println("REFRESH " + this.identityContext.getTenantId());
         this.machineTable.getContainerDataSource().removeAllItems();
         try {
             for (Machine machine : this.machineManager.getMachines()) {
@@ -243,7 +229,7 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
                 this.machines.addBean(new MachineBean(machine));
             }
         } catch (CloudProviderException e) {
-            e.printStackTrace();
+            Util.diplayErrorMessageBox("Internal error", e);
         }
         this.valueChange(null);
     }
@@ -373,7 +359,7 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
                     System.out.println("REMOVE PUSH");
                     this.getUI().push();
                 } catch (CloudProviderException e) {
-                    e.printStackTrace();
+                    Util.diplayErrorMessageBox("Internal error", e);
                 }
             }
         }
@@ -498,18 +484,13 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
             if (machine.getNetworkInterfaces() != null) {
                 for (MachineNetworkInterface nic : machine.getNetworkInterfaces()) {
                     if (nic.getAddresses() != null && !nic.getAddresses().isEmpty()) {
-                        MachineNetworkInterfaceAddress addr = nic.getAddresses().get(0);
-                        if (nic.getNetworkType() != null) {
-                            sb.append(nic.getNetworkType() + " ");
-                        } else if (nic.getNetwork() != null) {
-                            // XXX for public network, the second address if the
-                            // public one
-                            if (nic.getAddresses().size() == 2) {
-                                addr = nic.getAddresses().get(1);
-                            }
-                            sb.append(nic.getNetwork().getNetworkType() + " ");
+                        sb.append(nic.getNetwork().getNetworkType() + " ");
+                        if (nic.getAddresses().size() == 2) {
+                            sb.append(nic.getAddresses().get(1).getAddress().getIp() + "\n");
+                            sb.append("PRIVATE " + nic.getAddresses().get(0).getAddress().getIp());
+                        } else {
+                            sb.append(nic.getAddresses().get(0).getAddress().getIp());
                         }
-                        sb.append(addr.getAddress().getIp() + "\n");
                     }
                 }
             }
@@ -536,7 +517,7 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
 
         public String locationFrom(final Machine machine) {
             if (machine.getLocation() != null) {
-                return machine.getLocation().getCountryName();
+                return machine.getLocation().getIso3166_1().toLowerCase();
             } else {
                 return "";
             }

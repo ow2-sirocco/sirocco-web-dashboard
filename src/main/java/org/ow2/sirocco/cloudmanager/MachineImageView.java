@@ -39,7 +39,6 @@ import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.data.util.BeanContainer;
 import com.vaadin.server.ThemeResource;
-import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.Button.ClickListener;
@@ -110,7 +109,7 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
                                     MachineImageView.this.images.removeItem(id);
                                     MachineImageView.this.images.addBeanAt(index, newMachineImageBean);
                                 } catch (CloudProviderException e) {
-                                    e.printStackTrace();
+                                    Util.diplayErrorMessageBox("Image delete failure", e);
                                 }
                             }
                             MachineImageView.this.valueChange(null);
@@ -141,18 +140,6 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
         this.addComponent(this.machineImageTable = this.createMachineImageTable());
         this.setExpandRatio(this.machineImageTable, 1.0f);
 
-        // refresh();
-    }
-
-    Label createLabel(final String iconFileName, final String text) {
-        Label label = new Label();
-        label.setContentMode(ContentMode.HTML);
-        label.setValue("<img src=\"" + "VAADIN/themes/mytheme/img/" + iconFileName + "\" /> " + text);
-        return label;
-    }
-
-    Label makeCountryLabel(final String country) {
-        return this.createLabel(country.toLowerCase() + "Flag.png", "");
     }
 
     void refresh() {
@@ -163,7 +150,7 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
                 this.images.addBean(new MachineImageBean(machineImage));
             }
         } catch (CloudProviderException e) {
-            e.printStackTrace();
+            Util.diplayErrorMessageBox("Internal error", e);
         }
         this.valueChange(null);
     }
@@ -246,7 +233,7 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
                     System.out.println("REMOVE PUSH");
                     this.getUI().push();
                 } catch (CloudProviderException e) {
-                    e.printStackTrace();
+                    Util.diplayErrorMessageBox("Internal error", e);
                 }
             }
         }
@@ -330,7 +317,7 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
         public String locationFrom(final MachineImage machineImage) {
             ProviderMapping mapping = machineImage.getProviderMappings().get(0);
             if (mapping.getProviderLocation() != null) {
-                return mapping.getProviderLocation().getCountryName();
+                return mapping.getProviderLocation().getIso3166_1();
             } else {
                 return "";
             }

@@ -116,7 +116,7 @@ public class NetworkCreationWizard extends Window implements WizardProgressListe
                     .getCloudProvider().getDescription());
             }
         } catch (CloudProviderException e) {
-            e.printStackTrace();
+            Util.diplayErrorMessageBox("Internal error", e);
         }
 
         this.metadataStep.nameField.setValue("");
@@ -170,7 +170,7 @@ public class NetworkCreationWizard extends Window implements WizardProgressListe
             this.networkView.networks.addBeanAt(0, new NetworkBean(newNetwork));
 
         } catch (CloudProviderException e) {
-            e.printStackTrace();
+            Util.diplayErrorMessageBox("Cannot create network", e);
         }
     }
 

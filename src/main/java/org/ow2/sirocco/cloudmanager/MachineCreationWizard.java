@@ -161,7 +161,7 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
                     .getCloudProvider().getDescription());
             }
         } catch (CloudProviderException e) {
-            e.printStackTrace();
+            Util.diplayErrorMessageBox("Internal error", e);
         }
 
         this.metadataStep.nameField.setValue("");
@@ -174,7 +174,7 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
                 this.keyPairStep.keyPairBox.setItemCaption(cred.getId(), cred.getName());
             }
         } catch (CloudProviderException e) {
-            e.printStackTrace();
+            Util.diplayErrorMessageBox("Internal error", e);
         }
         this.updateProviderSpecificResources();
     }
@@ -192,7 +192,7 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
                 this.imageStep.imageBox.setItemCaption(image.getId(), image.getName());
             }
         } catch (CloudProviderException e) {
-            e.printStackTrace();
+            Util.diplayErrorMessageBox("Internal error", e);
         }
         this.configStep.configBox.removeAllItems();
         try {
@@ -206,7 +206,7 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
                 this.configStep.configBox.setItemCaption(config.getId(), config.getName());
             }
         } catch (CloudProviderException e) {
-            e.printStackTrace();
+            Util.diplayErrorMessageBox("Internal error", e);
         }
         this.networkStep.nics.removeAllItems();
         this.networkStep.nets.removeAllItems();
@@ -218,7 +218,7 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
                 }
             }
         } catch (CloudProviderException e) {
-            e.printStackTrace();
+            Util.diplayErrorMessageBox("Internal error", e);
         }
     }
 
@@ -295,7 +295,7 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
 
             UI.getCurrent().push();
         } catch (CloudProviderException e) {
-            e.printStackTrace();
+            Util.diplayErrorMessageBox("Instance creation failure", e);
         }
 
     }

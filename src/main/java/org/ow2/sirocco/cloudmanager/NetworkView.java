@@ -39,7 +39,6 @@ import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.data.util.BeanContainer;
 import com.vaadin.server.ThemeResource;
-import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.Button.ClickListener;
@@ -141,18 +140,6 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
         this.addComponent(this.networkTable = this.createNetworkTable());
         this.setExpandRatio(this.networkTable, 1.0f);
 
-        // refresh();
-    }
-
-    Label createLabel(final String iconFileName, final String text) {
-        Label label = new Label();
-        label.setContentMode(ContentMode.HTML);
-        label.setValue("<img src=\"" + "VAADIN/themes/mytheme/img/" + iconFileName + "\" /> " + text);
-        return label;
-    }
-
-    Label makeCountryLabel(final String country) {
-        return this.createLabel(country.toLowerCase() + "Flag.png", "");
     }
 
     void refresh() {
@@ -353,7 +340,7 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
 
         public String locationFrom(final Network network) {
             if (network.getLocation() != null) {
-                return network.getLocation().getCountryName();
+                return network.getLocation().getIso3166_1();
             } else {
                 return "";
             }

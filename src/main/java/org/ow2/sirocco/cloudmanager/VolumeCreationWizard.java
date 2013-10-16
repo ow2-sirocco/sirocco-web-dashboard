@@ -112,7 +112,7 @@ public class VolumeCreationWizard extends Window implements WizardProgressListen
                     .getCloudProvider().getDescription());
             }
         } catch (CloudProviderException e) {
-            e.printStackTrace();
+            Util.diplayErrorMessageBox("Internal error", e);
         }
 
         this.metadataStep.nameField.setValue("");
@@ -160,7 +160,7 @@ public class VolumeCreationWizard extends Window implements WizardProgressListen
             this.volumeView.volumes.addBeanAt(0, new VolumeBean(newVolume));
 
         } catch (CloudProviderException e) {
-            e.printStackTrace();
+            Util.diplayErrorMessageBox("Volume creation failure", e);
         }
     }
 

@@ -120,7 +120,7 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
                     }
 
                 } catch (CloudProviderException e) {
-                    e.printStackTrace();
+                    Util.diplayErrorMessageBox("Internal error", e);
                 }
 
                 VolumeAttachDialog volumeAttachDialog = new VolumeAttachDialog(choices,
@@ -142,7 +142,7 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
                                 VolumeView.this.volumes.addBeanAt(index, newVolumeBean);
                                 VolumeView.this.valueChange(null);
                             } catch (CloudProviderException e) {
-                                e.printStackTrace();
+                                Util.diplayErrorMessageBox("Volume attach failure", e);
                             }
                         }
                     });
@@ -171,7 +171,7 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
                     VolumeView.this.volumes.addBeanAt(index, newVolumeBean);
                     VolumeView.this.valueChange(null);
                 } catch (CloudProviderException e) {
-                    e.printStackTrace();
+                    Util.diplayErrorMessageBox("Volume detach failure", e);
                 }
             }
         });
@@ -201,7 +201,7 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
                                     VolumeView.this.volumes.removeItem(id);
                                     VolumeView.this.volumes.addBeanAt(index, newVolumeBean);
                                 } catch (CloudProviderException e) {
-                                    e.printStackTrace();
+                                    Util.diplayErrorMessageBox("Volume delete failure", e);
                                 }
                             }
                             VolumeView.this.valueChange(null);
@@ -240,7 +240,7 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
                 this.volumes.addBean(new VolumeBean(volume));
             }
         } catch (CloudProviderException e) {
-            e.printStackTrace();
+            Util.diplayErrorMessageBox("Volume list error", e);
         }
         this.valueChange(null);
     }
@@ -339,7 +339,7 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
                     System.out.println("REMOVE PUSH");
                     this.getUI().push();
                 } catch (CloudProviderException e) {
-                    e.printStackTrace();
+                    Util.diplayErrorMessageBox("Internal error", e);
                 }
             }
         }
@@ -460,7 +460,7 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
 
         public String locationFrom(final Volume volume) {
             if (volume.getLocation() != null) {
-                return volume.getLocation().getCountryName();
+                return volume.getLocation().getIso3166_1();
             } else {
                 return "";
             }
