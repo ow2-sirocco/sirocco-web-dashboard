@@ -172,29 +172,36 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
             @Override
             public void buttonClick(final ClickEvent event) {
                 final Set<?> selectedMachineIds = (Set<?>) MachineView.this.machineTable.getValue();
-                String name = MachineView.this.machines.getItem(selectedMachineIds.iterator().next()).getBean().getName();
-                ConfirmDialog confirmDialog = new ConfirmDialog("Delete Machine", "Are you sure you want to delete machine "
-                    + name + " ?", "Ok", "Cancel", new ConfirmDialog.ConfirmationDialogCallback() {
+                StringBuilder sb = new StringBuilder();
+                sb.append("Are you sure you want to delete ");
+                if (selectedMachineIds.size() == 1) {
+                    Object id = selectedMachineIds.iterator().next();
+                    sb.append("instance " + MachineView.this.machines.getItem(id).getBean().getName() + " ?");
+                } else {
+                    sb.append(" these " + selectedMachineIds.size() + " instances ?");
+                }
+                ConfirmDialog confirmDialog = new ConfirmDialog("Delete Machine", sb.toString(), "Ok", "Cancel",
+                    new ConfirmDialog.ConfirmationDialogCallback() {
 
-                    @Override
-                    public void response(final boolean ok) {
-                        if (ok) {
-                            for (Object id : selectedMachineIds) {
-                                try {
-                                    MachineView.this.machineManager.deleteMachine(id.toString());
-                                    Machine machine = MachineView.this.machineManager.getMachineById(id.toString());
-                                    MachineBean newMachineBean = new MachineBean(machine);
-                                    int index = MachineView.this.machines.indexOfId(id);
-                                    MachineView.this.machines.removeItem(id);
-                                    MachineView.this.machines.addBeanAt(index, newMachineBean);
-                                } catch (CloudProviderException e) {
-                                    Util.diplayErrorMessageBox("Cannot delete instance", e);
+                        @Override
+                        public void response(final boolean ok) {
+                            if (ok) {
+                                for (Object id : selectedMachineIds) {
+                                    try {
+                                        MachineView.this.machineManager.deleteMachine(id.toString());
+                                        Machine machine = MachineView.this.machineManager.getMachineById(id.toString());
+                                        MachineBean newMachineBean = new MachineBean(machine);
+                                        int index = MachineView.this.machines.indexOfId(id);
+                                        MachineView.this.machines.removeItem(id);
+                                        MachineView.this.machines.addBeanAt(index, newMachineBean);
+                                    } catch (CloudProviderException e) {
+                                        Util.diplayErrorMessageBox("Cannot delete instance", e);
+                                    }
                                 }
+                                MachineView.this.valueChange(null);
                             }
-                            MachineView.this.valueChange(null);
                         }
-                    }
-                });
+                    });
                 MachineView.this.getUI().addWindow(confirmDialog);
             }
         });
