@@ -79,8 +79,9 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
 
             @Override
             public void buttonClick(final ClickEvent event) {
-                NetworkView.this.networkCreationWizard.init(NetworkView.this);
-                UI.getCurrent().addWindow(NetworkView.this.networkCreationWizard);
+                if (NetworkView.this.networkCreationWizard.init(NetworkView.this)) {
+                    UI.getCurrent().addWindow(NetworkView.this.networkCreationWizard);
+                }
             }
         });
         actionButtonHeader.addComponent(button);

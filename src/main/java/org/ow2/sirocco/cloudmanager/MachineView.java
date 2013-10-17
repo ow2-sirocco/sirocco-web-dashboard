@@ -92,8 +92,9 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
 
             @Override
             public void buttonClick(final ClickEvent event) {
-                MachineView.this.machineCreationWizard.init(MachineView.this);
-                UI.getCurrent().addWindow(MachineView.this.machineCreationWizard);
+                if (MachineView.this.machineCreationWizard.init(MachineView.this)) {
+                    UI.getCurrent().addWindow(MachineView.this.machineCreationWizard);
+                }
             }
         });
         actionButtonHeader.addComponent(button);

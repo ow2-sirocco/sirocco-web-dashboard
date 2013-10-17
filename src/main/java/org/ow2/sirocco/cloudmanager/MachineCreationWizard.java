@@ -77,6 +77,10 @@ import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
 
+import de.steinwedel.messagebox.ButtonId;
+import de.steinwedel.messagebox.Icon;
+import de.steinwedel.messagebox.MessageBox;
+
 @UIScoped
 @SuppressWarnings("serial")
 public class MachineCreationWizard extends Window implements WizardProgressListener {
@@ -146,7 +150,7 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
         this.setContent(content);
     }
 
-    public void init(final MachineView machineView) {
+    public boolean init(final MachineView machineView) {
         this.machineView = machineView;
         this.wizard.setUriFragmentEnabled(false);
         this.wizard.activateStep(this.placementStep);
@@ -159,6 +163,10 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
                 this.placementStep.providerBox.addItem(providerAccount.getId().toString());
                 this.placementStep.providerBox.setItemCaption(providerAccount.getId().toString(), providerAccount
                     .getCloudProvider().getDescription());
+            }
+            if (this.placementStep.providerBox.getItemIds().isEmpty()) {
+                MessageBox.showPlain(Icon.ERROR, "No providers", "First add cloud providers", ButtonId.OK);
+                return false;
             }
         } catch (CloudProviderException e) {
             Util.diplayErrorMessageBox("Internal error", e);
@@ -177,6 +185,7 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
             Util.diplayErrorMessageBox("Internal error", e);
         }
         this.updateProviderSpecificResources();
+        return true;
     }
 
     private void updateProviderSpecificResources() {

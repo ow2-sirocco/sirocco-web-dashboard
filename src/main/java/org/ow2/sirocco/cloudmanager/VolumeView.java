@@ -90,8 +90,9 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
 
             @Override
             public void buttonClick(final ClickEvent event) {
-                VolumeView.this.volumeCreationWizard.init(VolumeView.this);
-                UI.getCurrent().addWindow(VolumeView.this.volumeCreationWizard);
+                if (VolumeView.this.volumeCreationWizard.init(VolumeView.this)) {
+                    UI.getCurrent().addWindow(VolumeView.this.volumeCreationWizard);
+                }
             }
         });
         actionButtonHeader.addComponent(button);

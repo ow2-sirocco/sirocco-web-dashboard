@@ -60,6 +60,10 @@ import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
 
+import de.steinwedel.messagebox.ButtonId;
+import de.steinwedel.messagebox.Icon;
+import de.steinwedel.messagebox.MessageBox;
+
 @UIScoped
 @SuppressWarnings("serial")
 public class NetworkCreationWizard extends Window implements WizardProgressListener {
@@ -101,7 +105,7 @@ public class NetworkCreationWizard extends Window implements WizardProgressListe
         this.setContent(content);
     }
 
-    public void init(final NetworkView networkView) {
+    public boolean init(final NetworkView networkView) {
         this.networkView = networkView;
         this.wizard.setUriFragmentEnabled(false);
         this.wizard.activateStep(this.placementStep);
@@ -118,9 +122,14 @@ public class NetworkCreationWizard extends Window implements WizardProgressListe
         } catch (CloudProviderException e) {
             Util.diplayErrorMessageBox("Internal error", e);
         }
+        if (this.placementStep.providerBox.getItemIds().isEmpty()) {
+            MessageBox.showPlain(Icon.ERROR, "No providers", "First add cloud providers", ButtonId.OK);
+            return false;
+        }
 
         this.metadataStep.nameField.setValue("");
         this.metadataStep.descriptionField.setValue("");
+        return true;
     }
 
     @Override
