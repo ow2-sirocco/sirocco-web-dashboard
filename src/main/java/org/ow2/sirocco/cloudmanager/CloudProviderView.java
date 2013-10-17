@@ -121,6 +121,7 @@ public class CloudProviderView extends VerticalLayout implements ValueChangeList
 
         Table table = new Table();
         // Add Table columns
+        table.addContainerProperty("id", Integer.class, "");
         table.addContainerProperty("type", String.class, "");
         table.addContainerProperty("description", String.class, "");
         table.addContainerProperty("endpoint", String.class, "");
@@ -133,7 +134,7 @@ public class CloudProviderView extends VerticalLayout implements ValueChangeList
 
         table.addGeneratedColumn("locations", new LocationsColumnGenerator());
 
-        table.setVisibleColumns("type", "description", "endpoint", "login", "locations");
+        table.setVisibleColumns("id", "type", "description", "endpoint", "login", "locations");
         table.setSelectable(true);
         table.setImmediate(true);
 
