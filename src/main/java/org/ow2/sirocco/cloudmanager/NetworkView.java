@@ -22,15 +22,12 @@
  */
 package org.ow2.sirocco.cloudmanager;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import javax.inject.Inject;
 
 import org.ow2.sirocco.cloudmanager.core.api.INetworkManager;
 import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
-import org.ow2.sirocco.cloudmanager.core.api.exception.ResourceNotFoundException;
 import org.ow2.sirocco.cloudmanager.model.cimi.Network;
 import org.ow2.sirocco.cloudmanager.model.cimi.Subnet;
 
@@ -104,11 +101,6 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
                             for (Object id : selectedNetworkIds) {
                                 try {
                                     NetworkView.this.networkManager.deleteNetwork(id.toString());
-                                    Network network = NetworkView.this.networkManager.getNetworkById(id.toString());
-                                    NetworkBean newMachineImageBean = new NetworkBean(network);
-                                    int index = NetworkView.this.networks.indexOfId(id);
-                                    NetworkView.this.networks.removeItem(id);
-                                    NetworkView.this.networks.addBeanAt(index, newMachineImageBean);
                                 } catch (CloudProviderException e) {
                                     e.printStackTrace();
                                 }
@@ -144,6 +136,7 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
     }
 
     void refresh() {
+        this.networkTable.setValue(null);
         this.networkTable.getContainerDataSource().removeAllItems();
         try {
             for (Network network : this.networkManager.getNetworks()) {
@@ -209,34 +202,13 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
         this.refresh();
     }
 
-    void pollNetworks() {
-        List<Integer> ids = new ArrayList<>(this.networks.getItemIds());
-        for (Integer id : ids) {
-            NetworkBean machineImageBean = this.networks.getItem(id).getBean();
-            if (machineImageBean.getState().endsWith("ING")) {
-                try {
-                    Network network = this.networkManager.getNetworkById(id.toString());
-                    System.out.println("Network id=" + id + " state=" + network.getState());
-                    if (!network.getState().toString().endsWith("ING")) {
-
-                        NetworkBean newNetworkBean = new NetworkBean(network);
-                        int index = this.networks.indexOfId(id);
-                        this.networks.removeItem(id);
-                        this.networks.addBeanAt(index, newNetworkBean);
-                        this.networkTable.setValue(null);
-                        this.valueChange(null);
-                        this.getUI().push();
-                    }
-                } catch (ResourceNotFoundException e) {
-                    this.networks.removeItem(id);
-                    this.networkTable.setValue(null);
-                    this.valueChange(null);
-                    System.out.println("REMOVE PUSH");
-                    this.getUI().push();
-                } catch (CloudProviderException e) {
-                    e.printStackTrace();
-                }
-            }
+    public void updateNetwork(final Network network) {
+        int index = this.networks.indexOfId(network.getId());
+        if (index != -1) {
+            this.networks.removeItem(network.getId());
+            this.networks.addBeanAt(index, new NetworkBean(network));
+            this.networkTable.setValue(null);
+            this.valueChange(null);
         }
     }
 
@@ -347,4 +319,5 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
             }
         }
     }
+
 }

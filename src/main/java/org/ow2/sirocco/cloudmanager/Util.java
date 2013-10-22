@@ -85,7 +85,7 @@ public class Util {
             String iconFile;
             if (state.endsWith("ING")) {
                 iconFile = "loading.gif";
-            } else if (state.equals("STARTED")) {
+            } else if (state.equals("STARTED") || state.equals("AVAILABLE") || state.equals("IN_USE")) {
                 iconFile = "ball_green.gif";
             } else {
                 iconFile = "ball_red.gif";

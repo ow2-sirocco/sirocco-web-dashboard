@@ -171,8 +171,8 @@ public class ProviderAccountCreationWizard extends Window implements WizardProgr
 
         try {
             CloudProviderAccount newAccount = null;
-            if (provider.getEndpoint() == null) {
-                List<CloudProvider> providers = this.providerManager.getCloudProviderByType(provider.getCloudProviderType());
+            List<CloudProvider> providers = this.providerManager.getCloudProviderByType(provider.getCloudProviderType());
+            if (provider.getEndpoint() == null && !providers.isEmpty()) {
                 newAccount = this.providerManager.createCloudProviderAccount(providers.get(0).getId().toString(), account,
                     options);
             } else {

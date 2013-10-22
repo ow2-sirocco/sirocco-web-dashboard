@@ -22,14 +22,27 @@
  */
 package org.ow2.sirocco.cloudmanager;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
+import javax.annotation.PreDestroy;
+import javax.annotation.Resource;
 import javax.inject.Inject;
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.MessageListener;
+import javax.jms.Session;
+import javax.jms.Topic;
 
 import org.ow2.sirocco.cloudmanager.core.api.IUserManager;
 import org.ow2.sirocco.cloudmanager.core.api.IdentityContext;
+import org.ow2.sirocco.cloudmanager.core.api.ResourceStateChangeEvent;
 import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
+import org.ow2.sirocco.cloudmanager.model.cimi.Machine;
+import org.ow2.sirocco.cloudmanager.model.cimi.MachineVolume;
+import org.ow2.sirocco.cloudmanager.model.cimi.MachineVolume.State;
+import org.ow2.sirocco.cloudmanager.model.cimi.Network;
+import org.ow2.sirocco.cloudmanager.model.cimi.Volume;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.Tenant;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.User;
 
@@ -39,7 +52,6 @@ import com.vaadin.cdi.CDIUI;
 import com.vaadin.data.Property;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
-import com.vaadin.server.Resource;
 import com.vaadin.server.ThemeResource;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinService;
@@ -55,13 +67,14 @@ import com.vaadin.ui.Label;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.Tree;
 import com.vaadin.ui.UI;
+import com.vaadin.ui.UIDetachedException;
 import com.vaadin.ui.VerticalLayout;
 
 @CDIUI
 @Theme("mytheme")
 @Push(PushMode.MANUAL)
 @SuppressWarnings("serial")
-public class MyUI extends UI {
+public class MyUI extends UI implements MessageListener {
     private VerticalLayout inventoryContainer;
 
     @Inject
@@ -88,13 +101,21 @@ public class MyUI extends UI {
     @Inject
     private IdentityContext identityContext;
 
+    @Resource(lookup = "jms/ResourceStateChangeTopic")
+    private Topic resourceStateChangeTopic;
+
+    @Resource
+    private ConnectionFactory connectionFactory;
+
+    private Session messagingSession;
+
+    private MessageConsumer consumer;
+
+    private Connection connection;
+
     private String userName;
 
     private String tenantId;
-
-    private ExecutorService executorService;
-
-    private Poller pollingTask;
 
     @Override
     protected void init(final VaadinRequest request) {
@@ -116,8 +137,7 @@ public class MyUI extends UI {
         header.setStyleName("topHeader");
 
         // logo
-        Resource res = new ThemeResource("img/sirocco_small_logo.png");
-        Image image = new Image(null, res);
+        Image image = new Image(null, new ThemeResource("img/sirocco_small_logo.png"));
         header.addComponent(image);
 
         // spacer
@@ -194,10 +214,39 @@ public class MyUI extends UI {
         layout.addComponent(splitPanel);
         layout.setExpandRatio(splitPanel, 1.0f);
 
-        this.executorService = Executors.newSingleThreadExecutor();
-        this.pollingTask = new Poller();
-        this.executorService.submit(this.pollingTask);
+        this.listenToNotifications();
 
+    }
+
+    void listenToNotifications() {
+        String selector = "tenantId = " + "'" + this.tenantId + "'";
+        try {
+            if (this.consumer != null) {
+                this.consumer.close();
+            }
+            this.connection = this.connectionFactory.createConnection();
+            this.messagingSession = this.connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            this.consumer = this.messagingSession.createConsumer(this.resourceStateChangeTopic, selector);
+
+            this.connection.start();
+
+            this.consumer.setMessageListener(this);
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @PreDestroy
+    private void destroy() {
+        if (this.consumer != null) {
+            try {
+                this.consumer.close();
+                this.messagingSession.close();
+                this.connection.close();
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private static final String PROVIDERS_MENU_ITEM_ID = "Providers";
@@ -324,8 +373,6 @@ public class MyUI extends UI {
 
     @Override
     public void detach() {
-        this.pollingTask.cancel();
-        this.executorService.shutdownNow();
         super.detach();
     }
 
@@ -340,37 +387,63 @@ public class MyUI extends UI {
         this.getUI().getPage().setLocation(VaadinServletService.getCurrentServletRequest().getContextPath() + "/logout.jsp");
     }
 
-    class Poller implements Runnable {
-        volatile boolean cancelled;
-
-        void cancel() {
-            this.cancelled = true;
-        }
-
-        @Override
-        public void run() {
-            while (!this.cancelled) {
-                try {
-                    Thread.sleep(1000 * 10);
-                } catch (InterruptedException e) {
-                    break;
-                }
-                MyUI.this.access(new Runnable() {
+    @Override
+    public void onMessage(final Message message) {
+        try {
+            final ResourceStateChangeEvent event = message.getBody(ResourceStateChangeEvent.class);
+            try {
+                this.access(new Runnable() {
                     @Override
                     public void run() {
-                        // System.out.println("POLL start");
-                        try {
-                            MyUI.this.machineView.pollMachines();
-                            MyUI.this.volumeView.pollVolumes();
-                            MyUI.this.networkView.pollNetworks();
-                        } catch (Exception e) {
-                            e.printStackTrace();
+
+                        if (event.getResource() instanceof Machine) {
+                            Machine machine = (Machine) event.getResource();
+                            if (!machine.getState().toString().endsWith("ING")) {
+                                Notification.show("Instance " + machine.getName() + " "
+                                    + machine.getState().toString().toLowerCase(), Notification.Type.TRAY_NOTIFICATION);
+                            }
+                            MyUI.this.machineView.updateMachine(machine);
+                        } else if (event.getResource() instanceof Volume) {
+                            Volume volume = (Volume) event.getResource();
+                            if (!volume.getState().toString().endsWith("ING")) {
+                                Notification.show("Volume " + volume.getName() + " "
+                                    + volume.getState().toString().toLowerCase(), Notification.Type.TRAY_NOTIFICATION);
+                            }
+                            MyUI.this.volumeView.updateVolume(volume);
+                        } else if (event.getResource() instanceof MachineVolume) {
+                            MachineVolume machineVolume = (MachineVolume) event.getResource();
+                            if (!machineVolume.getState().toString().endsWith("ING")) {
+                                String message;
+                                if (machineVolume.getState() == State.DELETED) {
+                                    message = "detached";
+                                } else if (machineVolume.getState() == State.ATTACHED) {
+                                    message = "attached";
+                                } else {
+                                    message = "error";
+                                }
+                                Notification.show("Volume " + machineVolume.getVolume().getName() + " " + message,
+                                    Notification.Type.TRAY_NOTIFICATION);
+                            }
+                            MyUI.this.volumeView.updateVolume(machineVolume.getVolume());
+                        } else if (event.getResource() instanceof Network) {
+                            Network network = (Network) event.getResource();
+                            if (!network.getState().toString().endsWith("ING")) {
+                                Notification.show("Network " + network.getName() + " "
+                                    + network.getState().toString().toLowerCase(), Notification.Type.TRAY_NOTIFICATION);
+                            }
+                            MyUI.this.networkView.updateNetwork(network);
                         }
-                        // System.out.println("POLL end");
+                        MyUI.this.push();
                     }
                 });
+            } catch (UIDetachedException e) {
             }
 
+        } catch (JMSException e) {
+            Notification.show("Unable to retrieve message. See server log");
+            this.push();
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
     }
 

@@ -22,8 +22,6 @@
  */
 package org.ow2.sirocco.cloudmanager;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -31,7 +29,6 @@ import javax.inject.Inject;
 import org.ow2.sirocco.cloudmanager.core.api.IMachineManager;
 import org.ow2.sirocco.cloudmanager.core.api.IdentityContext;
 import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
-import org.ow2.sirocco.cloudmanager.core.api.exception.ResourceNotFoundException;
 import org.ow2.sirocco.cloudmanager.model.cimi.Machine;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineDisk;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineNetworkInterface;
@@ -110,12 +107,6 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
                 Integer id = (Integer) selectedMachineIds.iterator().next();
                 try {
                     MachineView.this.machineManager.startMachine(id.toString());
-                    Machine machine = MachineView.this.machineManager.getMachineById(id.toString());
-                    MachineBean newMachineBean = new MachineBean(machine);
-                    int index = MachineView.this.machines.indexOfId(id);
-                    MachineView.this.machines.removeItem(id);
-                    MachineView.this.machines.addBeanAt(index, newMachineBean);
-                    MachineView.this.valueChange(null);
                 } catch (CloudProviderException e) {
                     Util.diplayErrorMessageBox("Cannot start instance", e);
                 }
@@ -134,12 +125,6 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
                 Integer id = (Integer) selectedMachineIds.iterator().next();
                 try {
                     MachineView.this.machineManager.stopMachine(id.toString());
-                    Machine machine = MachineView.this.machineManager.getMachineById(id.toString());
-                    MachineBean newMachineBean = new MachineBean(machine);
-                    int index = MachineView.this.machines.indexOfId(id);
-                    MachineView.this.machines.removeItem(id);
-                    MachineView.this.machines.addBeanAt(index, newMachineBean);
-                    MachineView.this.valueChange(null);
                 } catch (CloudProviderException e) {
                     Util.diplayErrorMessageBox("Cannot stop instance", e);
                 }
@@ -190,11 +175,6 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
                                 for (Object id : selectedMachineIds) {
                                     try {
                                         MachineView.this.machineManager.deleteMachine(id.toString());
-                                        Machine machine = MachineView.this.machineManager.getMachineById(id.toString());
-                                        MachineBean newMachineBean = new MachineBean(machine);
-                                        int index = MachineView.this.machines.indexOfId(id);
-                                        MachineView.this.machines.removeItem(id);
-                                        MachineView.this.machines.addBeanAt(index, newMachineBean);
                                     } catch (CloudProviderException e) {
                                         Util.diplayErrorMessageBox("Cannot delete instance", e);
                                     }
@@ -230,6 +210,7 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
     }
 
     void refresh() {
+        this.machineTable.setValue(null);
         this.machineTable.getContainerDataSource().removeAllItems();
         try {
             for (Machine machine : this.machineManager.getMachines()) {
@@ -256,27 +237,6 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
         table.setMultiSelect(true);
         table.setImmediate(true);
 
-        // table.addContainerProperty("name", String.class, null, "Name", null,
-        // null);
-        // table.addContainerProperty("state", String.class, null, "State",
-        // null,
-        // null);
-        // table.addContainerProperty("addresses", String.class, null,
-        // "IP addresses", null, null);
-        // table.addContainerProperty("cpu", String.class, null, "Cpu", null,
-        // null);
-        // table.addContainerProperty("memory", String.class, null, "Memory",
-        // null, null);
-        // table.addContainerProperty("disks", String.class, null, "Disks",
-        // null,
-        // null);
-        // table.addContainerProperty("provider", String.class, null,
-        // "Provider",
-        // null, null);
-        // table.addContainerProperty("location", String.class, null,
-        // "Location",
-        // null, null);
-
         table.setColumnHeader("addresses", "IP addresses");
 
         table.addGeneratedColumn("state", new Util.StateColumnGenerator());
@@ -300,7 +260,7 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
                 this.startMachineButton.setEnabled(state.endsWith("STOPPED"));
                 this.stopMachineButton.setEnabled(state.endsWith("STARTED"));
                 this.restartMachineButton.setEnabled(state.endsWith("STARTED"));
-                this.deleteMachineButton.setEnabled(!state.endsWith("DELETING"));
+                this.deleteMachineButton.setEnabled(!state.endsWith("DELETING") && !state.endsWith("DELETED"));
             } else {
                 this.startMachineButton.setEnabled(false);
                 this.stopMachineButton.setEnabled(false);
@@ -308,7 +268,7 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
                 boolean allowMultiDelete = true;
                 for (Object machineId : selectedMachineIds) {
                     String state = (String) this.machineTable.getItem(machineId).getItemProperty("state").getValue();
-                    if (state.endsWith("DELETING")) {
+                    if (state.endsWith("DELETING") || state.endsWith("DELETED")) {
                         allowMultiDelete = false;
                         break;
                     }
@@ -340,36 +300,13 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
         }
     }
 
-    void pollMachines() {
-        // System.out.println("Polling machines");
-        List<Integer> ids = new ArrayList<>(this.machines.getItemIds());
-        for (Integer id : ids) {
-            MachineBean machineBean = this.machines.getItem(id).getBean();
-            if (machineBean.getState().endsWith("ING")) {
-                try {
-                    Machine machine = this.machineManager.getMachineById(id.toString());
-                    System.out.println("Machine id=" + id + " state=" + machine.getState());
-                    if (!machine.getState().toString().endsWith("ING")) {
-
-                        MachineBean newMachineBean = new MachineBean(machine);
-                        int index = this.machines.indexOfId(id);
-                        this.machines.removeItem(id);
-                        this.machines.addBeanAt(index, newMachineBean);
-                        this.machineTable.setValue(null);
-                        this.valueChange(null);
-                        System.out.println("PUSH");
-                        this.getUI().push();
-                    }
-                } catch (ResourceNotFoundException e) {
-                    this.machines.removeItem(id);
-                    this.machineTable.setValue(null);
-                    this.valueChange(null);
-                    System.out.println("REMOVE PUSH");
-                    this.getUI().push();
-                } catch (CloudProviderException e) {
-                    Util.diplayErrorMessageBox("Internal error", e);
-                }
-            }
+    void updateMachine(final Machine machine) {
+        int index = this.machines.indexOfId(machine.getId());
+        if (index != -1) {
+            this.machines.removeItem(machine.getId());
+            this.machines.addBeanAt(index, new MachineBean(machine));
+            this.machineTable.setValue(null);
+            this.valueChange(null);
         }
     }
 

@@ -32,10 +32,10 @@ import org.ow2.sirocco.cloudmanager.VolumeAttachDialog.MachineChoice;
 import org.ow2.sirocco.cloudmanager.core.api.IMachineManager;
 import org.ow2.sirocco.cloudmanager.core.api.IVolumeManager;
 import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
-import org.ow2.sirocco.cloudmanager.core.api.exception.ResourceNotFoundException;
 import org.ow2.sirocco.cloudmanager.model.cimi.Machine;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineVolume;
 import org.ow2.sirocco.cloudmanager.model.cimi.Volume;
+import org.ow2.sirocco.cloudmanager.model.cimi.Volume.State;
 
 import com.vaadin.cdi.UIScoped;
 import com.vaadin.data.Item;
@@ -135,13 +135,6 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
                                 volumeAttachment.setInitialLocation(location);
                                 volumeAttachment.setVolume(volume);
                                 VolumeView.this.machineManager.addVolumeToMachine(machineId.toString(), volumeAttachment);
-
-                                volume = VolumeView.this.volumeManager.getVolumeById(volumeId.toString());
-                                VolumeBean newVolumeBean = new VolumeBean(volume);
-                                int index = VolumeView.this.volumes.indexOfId(volumeId);
-                                VolumeView.this.volumes.removeItem(volumeId);
-                                VolumeView.this.volumes.addBeanAt(index, newVolumeBean);
-                                VolumeView.this.valueChange(null);
                             } catch (CloudProviderException e) {
                                 Util.diplayErrorMessageBox("Volume attach failure", e);
                             }
@@ -165,12 +158,6 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
                     MachineVolume volumeAttachment = volume.getAttachments().get(0);
                     VolumeView.this.machineManager.removeVolumeFromMachine(volumeAttachment.getOwner().getId().toString(),
                         volumeAttachment.getId().toString());
-                    volume = VolumeView.this.volumeManager.getVolumeById(volumeId.toString());
-                    VolumeBean newVolumeBean = new VolumeBean(volume);
-                    int index = VolumeView.this.volumes.indexOfId(volumeId);
-                    VolumeView.this.volumes.removeItem(volumeId);
-                    VolumeView.this.volumes.addBeanAt(index, newVolumeBean);
-                    VolumeView.this.valueChange(null);
                 } catch (CloudProviderException e) {
                     Util.diplayErrorMessageBox("Volume detach failure", e);
                 }
@@ -196,11 +183,6 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
                             for (Object id : selectedVolumeIds) {
                                 try {
                                     VolumeView.this.volumeManager.deleteVolume(id.toString());
-                                    Volume volume = VolumeView.this.volumeManager.getVolumeById(id.toString());
-                                    VolumeBean newVolumeBean = new VolumeBean(volume);
-                                    int index = VolumeView.this.volumes.indexOfId(id);
-                                    VolumeView.this.volumes.removeItem(id);
-                                    VolumeView.this.volumes.addBeanAt(index, newVolumeBean);
                                 } catch (CloudProviderException e) {
                                     Util.diplayErrorMessageBox("Volume delete failure", e);
                                 }
@@ -235,6 +217,7 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
     }
 
     void refresh() {
+        this.volumeTable.setValue(null);
         this.volumeTable.getContainerDataSource().removeAllItems();
         try {
             for (Volume volume : this.volumeManager.getVolumes()) {
@@ -306,43 +289,20 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
         this.refresh();
     }
 
-    void pollVolumes() {
-        // System.out.println("Polling volumes");
-        List<Integer> ids = new ArrayList<>(this.volumes.getItemIds());
-        for (Integer id : ids) {
-            VolumeBean volumeBean = this.volumes.getItem(id).getBean();
-            if (volumeBean.getState().endsWith("ING")) {
+    public void updateVolume(Volume volume) {
+        int index = this.volumes.indexOfId(volume.getId());
+        if (index != -1) {
+            if (volume.getState() != State.DELETED) {
                 try {
-                    Volume volume = this.volumeManager.getVolumeById(id.toString());
-                    System.out.println("Volume id=" + id + " state=" + volume.getState());
-                    boolean attachmentPending = false;
-                    if (volume.getAttachments() != null && !volume.getAttachments().isEmpty()) {
-                        MachineVolume attachment = volume.getAttachments().get(0);
-                        if (attachment.getState().toString().endsWith("ING")) {
-                            attachmentPending = true;
-                        }
-                    }
-                    if (!volume.getState().toString().endsWith("ING") && !attachmentPending) {
-
-                        VolumeBean newVolumeBean = new VolumeBean(volume);
-                        int index = this.volumes.indexOfId(id);
-                        this.volumes.removeItem(id);
-                        this.volumes.addBeanAt(index, newVolumeBean);
-                        this.volumeTable.setValue(null);
-                        this.valueChange(null);
-                        System.out.println("PUSH");
-                        this.getUI().push();
-                    }
-                } catch (ResourceNotFoundException e) {
-                    this.volumes.removeItem(id);
-                    this.volumeTable.setValue(null);
-                    this.valueChange(null);
-                    System.out.println("REMOVE PUSH");
-                    this.getUI().push();
+                    volume = this.volumeManager.getVolumeById(volume.getId().toString());
                 } catch (CloudProviderException e) {
-                    Util.diplayErrorMessageBox("Internal error", e);
+                    return;
                 }
             }
+            this.volumes.removeItem(volume.getId());
+            this.volumes.addBeanAt(index, new VolumeBean(volume));
+            this.volumeTable.setValue(null);
+            this.valueChange(null);
         }
     }
 
@@ -467,4 +427,5 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
             }
         }
     }
+
 }
