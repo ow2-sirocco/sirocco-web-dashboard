@@ -205,7 +205,7 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
         }
         this.configStep.configBox.removeAllItems();
         try {
-            for (MachineConfiguration config : this.machineManager.getMachineConfigurations()) {
+            for (MachineConfiguration config : this.machineManager.getMachineConfigurations().getItems()) {
                 ProviderMapping mapping = ProviderMapping.find(config, this.getSelectedProviderAccountId(),
                     this.getSelectedCountry());
                 if (mapping == null) {
@@ -220,7 +220,7 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
         this.networkStep.nics.removeAllItems();
         this.networkStep.nets.removeAllItems();
         try {
-            for (Network net : this.networkManager.getNetworks()) {
+            for (Network net : this.networkManager.getNetworks().getItems()) {
                 if (net.getCloudProviderAccount().getId().toString().equals(this.getSelectedProviderAccountId())
                     && net.getLocation().getCountryName().equals(this.getSelectedCountry())) {
                     this.networkStep.nets.addBean(new NetBean(net));

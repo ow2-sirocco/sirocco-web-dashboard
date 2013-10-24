@@ -109,7 +109,7 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
                 Volume volume;
                 try {
                     volume = VolumeView.this.volumeManager.getVolumeById(volumeId.toString());
-                    List<Machine> machines = VolumeView.this.machineManager.getMachines();
+                    List<Machine> machines = VolumeView.this.machineManager.getMachines().getItems();
                     for (Machine machine : machines) {
                         if (machine.getCloudProviderAccount().getId() == volume.getCloudProviderAccount().getId()
                             && machine.getLocation().getId() == volume.getLocation().getId()) {
@@ -220,7 +220,7 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
         this.volumeTable.setValue(null);
         this.volumeTable.getContainerDataSource().removeAllItems();
         try {
-            for (Volume volume : this.volumeManager.getVolumes()) {
+            for (Volume volume : this.volumeManager.getVolumes().getItems()) {
                 this.volumes.addBean(new VolumeBean(volume));
             }
         } catch (CloudProviderException e) {

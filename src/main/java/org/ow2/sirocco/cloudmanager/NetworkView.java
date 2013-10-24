@@ -139,7 +139,7 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
         this.networkTable.setValue(null);
         this.networkTable.getContainerDataSource().removeAllItems();
         try {
-            for (Network network : this.networkManager.getNetworks()) {
+            for (Network network : this.networkManager.getNetworks().getItems()) {
                 System.out.println("Network id=" + network.getId() + " name=" + network.getName());
                 this.networks.addBean(new NetworkBean(network));
             }
