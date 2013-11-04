@@ -120,9 +120,7 @@ public class MyUI extends UI implements MessageListener {
     @Override
     protected void init(final VaadinRequest request) {
         this.userName = request.getUserPrincipal().getName();
-        this.tenantId = "1";
         this.identityContext.setUserName(this.userName);
-        this.identityContext.setTenantId(this.tenantId);
 
         this.getPage().setTitle("Sirocco Dashboard");
         final VerticalLayout layout = new VerticalLayout();
@@ -178,6 +176,9 @@ public class MyUI extends UI implements MessageListener {
         });
         tenantSelect.setImmediate(true);
         rightButtons.addComponent(tenantSelect);
+
+        this.tenantId = user.getTenants().iterator().next().getId().toString();
+        this.identityContext.setTenantId(this.tenantId);
 
         // logged user name
 
