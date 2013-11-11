@@ -259,8 +259,8 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
 
         try {
             String accountId = this.getSelectedProviderAccountId();
-            machineCreate.getProperties().put("providerAccountId", accountId);
-            machineCreate.getProperties().put("location", this.getSelectedCountry());
+            machineCreate.setProviderAccountId(accountId);
+            machineCreate.setLocation(this.getSelectedCountry());
             machineCreate.setName(MachineCreationWizard.this.metadataStep.nameField.getValue());
             machineCreate.setDescription(MachineCreationWizard.this.metadataStep.descriptionField.getValue());
             if (machineCreate.getDescription().isEmpty()) {

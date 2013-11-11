@@ -214,7 +214,6 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
         this.machineTable.getContainerDataSource().removeAllItems();
         try {
             for (Machine machine : this.machineManager.getMachines().getItems()) {
-                System.out.println("Machine id=" + machine.getId() + " name=" + machine.getName());
                 this.machines.addBean(new MachineBean(machine));
             }
         } catch (CloudProviderException e) {

@@ -152,8 +152,8 @@ public class NetworkCreationWizard extends Window implements WizardProgressListe
 
         try {
             String accountId = (String) this.placementStep.providerBox.getValue();
-            networkCreate.getProperties().put("providerAccountId", accountId);
-            networkCreate.getProperties().put("location", (String) this.placementStep.locationBox.getValue());
+            networkCreate.setProviderAccountId(accountId);
+            networkCreate.setLocation((String) this.placementStep.locationBox.getValue());
             networkCreate.setName(this.metadataStep.nameField.getValue());
             networkCreate.setDescription(this.metadataStep.descriptionField.getValue());
             if (networkCreate.getDescription().isEmpty()) {

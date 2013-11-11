@@ -148,8 +148,8 @@ public class VolumeCreationWizard extends Window implements WizardProgressListen
 
         try {
             String accountId = (String) this.placementStep.providerBox.getValue();
-            volumeCreate.getProperties().put("providerAccountId", accountId);
-            volumeCreate.getProperties().put("location", (String) this.placementStep.locationBox.getValue());
+            volumeCreate.setProviderAccountId(accountId);
+            volumeCreate.setLocation((String) this.placementStep.locationBox.getValue());
             volumeCreate.setName(this.metadataStep.nameField.getValue());
             volumeCreate.setDescription(this.metadataStep.descriptionField.getValue());
             if (volumeCreate.getDescription().isEmpty()) {
