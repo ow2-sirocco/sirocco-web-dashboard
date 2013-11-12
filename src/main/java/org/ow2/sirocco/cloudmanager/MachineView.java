@@ -48,9 +48,10 @@ import com.vaadin.ui.Label;
 import com.vaadin.ui.Table;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
+import com.vaadin.ui.VerticalSplitPanel;
 
 @UIScoped
-public class MachineView extends VerticalLayout implements ValueChangeListener {
+public class MachineView extends VerticalSplitPanel implements ValueChangeListener {
     private static final long serialVersionUID = 1L;
 
     private Button startMachineButton;
@@ -68,14 +69,19 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
     @Inject
     private MachineCreationWizard machineCreationWizard;
 
+    private MachineDetailView detailView;
+
     @Inject
-    private IMachineManager machineManager;
+    IMachineManager machineManager;
 
     @Inject
     IdentityContext identityContext;
 
     public MachineView() {
         this.setSizeFull();
+
+        VerticalLayout verticalLayout = new VerticalLayout();
+        verticalLayout.setSizeFull();
 
         HorizontalLayout actionButtonHeader = new HorizontalLayout();
         actionButtonHeader.setMargin(true);
@@ -203,9 +209,13 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
         button.setIcon(new ThemeResource("img/refresh.png"));
         actionButtonHeader.addComponent(button);
 
-        this.addComponent(actionButtonHeader);
-        this.addComponent(this.machineTable = this.createMachineTable());
-        this.setExpandRatio(this.machineTable, 1.0f);
+        verticalLayout.addComponent(actionButtonHeader);
+        verticalLayout.addComponent(this.machineTable = this.createMachineTable());
+        verticalLayout.setExpandRatio(this.machineTable, 1.0f);
+
+        this.setFirstComponent(verticalLayout);
+        this.setSecondComponent(this.detailView = new MachineDetailView(this));
+        this.setSplitPosition(60.0f);
 
     }
 
@@ -254,13 +264,15 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
         Set<?> selectedMachineIds = (Set<?>) this.machineTable.getValue();
         if (selectedMachineIds != null && selectedMachineIds.size() > 0) {
             if (selectedMachineIds.size() == 1) {
-                String state = (String) this.machineTable.getItem(selectedMachineIds.iterator().next())
-                    .getItemProperty("state").getValue();
+                Object id = selectedMachineIds.iterator().next();
+                String state = (String) this.machineTable.getItem(id).getItemProperty("state").getValue();
                 this.startMachineButton.setEnabled(state.endsWith("STOPPED"));
                 this.stopMachineButton.setEnabled(state.endsWith("STARTED"));
                 this.restartMachineButton.setEnabled(state.endsWith("STARTED"));
                 this.deleteMachineButton.setEnabled(!state.endsWith("DELETING") && !state.endsWith("DELETED"));
+                this.detailView.update(this.machines.getItem(id).getBean());
             } else {
+                this.detailView.hide();
                 this.startMachineButton.setEnabled(false);
                 this.stopMachineButton.setEnabled(false);
                 this.restartMachineButton.setEnabled(false);
@@ -275,6 +287,7 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
                 this.deleteMachineButton.setEnabled(allowMultiDelete);
             }
         } else {
+            this.detailView.hide();
             this.startMachineButton.setEnabled(false);
             this.stopMachineButton.setEnabled(false);
             this.restartMachineButton.setEnabled(false);
@@ -302,14 +315,25 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
     void updateMachine(final Machine machine) {
         int index = this.machines.indexOfId(machine.getId());
         if (index != -1) {
+            MachineBean machineBean = new MachineBean(machine);
             this.machines.removeItem(machine.getId());
-            this.machines.addBeanAt(index, new MachineBean(machine));
-            this.machineTable.setValue(null);
-            this.valueChange(null);
+            this.machines.addBeanAt(index, machineBean);
+            // this.machineTable.setValue(null);
+            // this.valueChange(null);
+            if (this.detailView.getMachine().getId().equals(machine.getId())) {
+                this.detailView.update(machineBean);
+            }
         }
     }
 
+    MachineBean updateMachineAttribute(final MachineBean machineBean, final String attribute, final String value) {
+        this.machineTable.getItem(machineBean.getId()).getItemProperty(attribute).setValue(value);
+        return this.machines.getItem(machineBean.getId()).getBean();
+    }
+
     public static class MachineBean {
+        Machine machine;
+
         Integer id;
 
         String name;
@@ -331,6 +355,7 @@ public class MachineView extends VerticalLayout implements ValueChangeListener {
         String location;
 
         MachineBean(final Machine machine) {
+            this.machine = machine;
             this.id = machine.getId();
             this.name = machine.getName();
             this.description = machine.getDescription();
