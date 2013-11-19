@@ -40,16 +40,18 @@ import com.vaadin.ui.Table;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
-public class MachineDetailView extends VerticalLayout {
+public class MachineDetailView extends VerticalLayout implements MetadataView.Callback {
     private static final long serialVersionUID = 1L;
 
     private Label title;
 
-    private Table attributeTable = new Table();
+    private Table attributeTable;
 
     private MachineBean machineBean;
 
     private MachineView machineView;
+
+    private MetadataView metadataView;
 
     public MachineDetailView(final MachineView machineView) {
         this.machineView = machineView;
@@ -79,11 +81,24 @@ public class MachineDetailView extends VerticalLayout {
 
         tabSheet.addTab(attributeTab, "Attributes");
 
-        VerticalLayout metadataTab = new VerticalLayout();
-        metadataTab.setSizeFull();
-        tabSheet.addTab(metadataTab, "Metadata");
+        this.metadataView = new MetadataView(this);
+
+        tabSheet.addTab(this.metadataView, "Metadata");
         this.addComponent(tabSheet);
         this.setExpandRatio(tabSheet, 1.0f);
+    }
+
+    public void updateResourceMetadata(final Map<String, String> metadata) {
+        Map<String, Object> updatedAttributes = new HashMap<>();
+        updatedAttributes.put("properties", metadata);
+        try {
+            this.machineBean.machine = (Machine) MachineDetailView.this.machineView.machineManager.updateMachineAttributes(
+                MachineDetailView.this.machineBean.getId().toString(), updatedAttributes).getTargetResource();
+        } catch (CloudProviderException e) {
+            // TODO
+            e.printStackTrace();
+        }
+        this.update(this.machineBean);
     }
 
     private int index = 1;
@@ -103,8 +118,9 @@ public class MachineDetailView extends VerticalLayout {
                                 Map<String, Object> updatedAttributes = new HashMap<>();
                                 updatedAttributes.put(attributeName, value);
                                 try {
-                                    MachineDetailView.this.machineView.machineManager.updateMachineAttributes(
-                                        MachineDetailView.this.machineBean.getId().toString(), updatedAttributes);
+                                    MachineDetailView.this.machineBean.machine = (Machine) MachineDetailView.this.machineView.machineManager
+                                        .updateMachineAttributes(MachineDetailView.this.machineBean.getId().toString(),
+                                            updatedAttributes).getTargetResource();
                                 } catch (CloudProviderException e) {
                                     // TODO
                                     e.printStackTrace();
@@ -164,7 +180,9 @@ public class MachineDetailView extends VerticalLayout {
         if (machine.getNetworkInterfaces() != null) {
             int nicIndex = 0;
             for (MachineNetworkInterface nic : machine.getNetworkInterfaces()) {
-                this.addAttribute("nic" + nicIndex, "Network: " + nic.getNetwork().getName(), false);
+                if (nic.getNetwork() != null) {
+                    this.addAttribute("nic" + nicIndex, "Network: " + nic.getNetwork().getName(), false);
+                }
                 if (nic.getAddresses() != null && !nic.getAddresses().isEmpty()) {
                     if (nic.getAddresses().size() == 2) {
                         this.addAttribute("public IP", nic.getAddresses().get(1).getAddress().getIp(), false);
@@ -182,6 +200,9 @@ public class MachineDetailView extends VerticalLayout {
         this.addAttribute("provider account id", machine.getCloudProviderAccount().getId().toString(), false);
         this.addAttribute("provider-assigned id", machine.getProviderAssignedId(), false);
         this.addAttribute("location", machine.getLocation().getCountryName(), false);
+
+        this.metadataView.init(machine.getProperties());
+
     }
 
 }

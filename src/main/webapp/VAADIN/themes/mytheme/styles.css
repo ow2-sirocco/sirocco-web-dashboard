@@ -7067,3 +7067,7 @@ body .mytheme.v-app .v-app-loading {
 .mytheme .detailmargins.v-margin-right  {padding-right:  10px;}
 .mytheme .detailmargins.v-margin-top    {padding-top:    10px;}
 .mytheme .detailmargins.v-margin-bottom {padding-bottom: 10px;}
+
+.mytheme .metadata-table .v-table-cell-content {
+   vertical-align: middle;
+}
