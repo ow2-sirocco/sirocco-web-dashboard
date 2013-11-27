@@ -53,7 +53,7 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
 
     private Table networkTable;
 
-    BeanContainer<Integer, NetworkBean> networks;
+    BeanContainer<String, NetworkBean> networks;
 
     @Inject
     private NetworkCreationWizard networkCreationWizard;
@@ -140,7 +140,6 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
         this.networkTable.getContainerDataSource().removeAllItems();
         try {
             for (Network network : this.networkManager.getNetworks().getItems()) {
-                System.out.println("Network id=" + network.getId() + " name=" + network.getName());
                 this.networks.addBean(new NetworkBean(network));
             }
         } catch (CloudProviderException e) {
@@ -150,7 +149,7 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
     }
 
     Table createNetworkTable() {
-        this.networks = new BeanContainer<Integer, NetworkBean>(NetworkBean.class);
+        this.networks = new BeanContainer<String, NetworkBean>(NetworkBean.class);
         this.networks.setBeanIdProperty("id");
         Table table = new Table();
         table.setContainerDataSource(this.networks);
@@ -203,9 +202,9 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
     }
 
     public void updateNetwork(final Network network) {
-        int index = this.networks.indexOfId(network.getId());
+        int index = this.networks.indexOfId(network.getUuid());
         if (index != -1) {
-            this.networks.removeItem(network.getId());
+            this.networks.removeItem(network.getUuid());
             this.networks.addBeanAt(index, new NetworkBean(network));
             this.networkTable.setValue(null);
             this.valueChange(null);
@@ -213,7 +212,7 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
     }
 
     public static class NetworkBean {
-        Integer id;
+        String id;
 
         String name;
 
@@ -228,7 +227,7 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
         String location;
 
         NetworkBean(final Network network) {
-            this.id = network.getId();
+            this.id = network.getUuid();
             this.name = network.getName();
             this.description = network.getDescription();
             this.state = network.getState().toString();
@@ -237,11 +236,11 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
             this.subnets = this.subnetsFrom(network);
         }
 
-        public Integer getId() {
+        public String getId() {
             return this.id;
         }
 
-        public void setId(final Integer id) {
+        public void setId(final String id) {
             this.id = id;
         }
 

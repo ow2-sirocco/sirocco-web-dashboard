@@ -51,7 +51,7 @@ public class CloudProviderView extends VerticalLayout implements ValueChangeList
 
     private Table providerAccountTable;
 
-    BeanContainer<Integer, CloudProviderAccountBean> providerAccounts;
+    BeanContainer<String, CloudProviderAccountBean> providerAccounts;
 
     @Inject
     private ICloudProviderManager cloudProviderManager;
@@ -116,12 +116,12 @@ public class CloudProviderView extends VerticalLayout implements ValueChangeList
     }
 
     Table createCloudProviderAccountTable() {
-        this.providerAccounts = new BeanContainer<Integer, CloudProviderAccountBean>(CloudProviderAccountBean.class);
+        this.providerAccounts = new BeanContainer<String, CloudProviderAccountBean>(CloudProviderAccountBean.class);
         this.providerAccounts.setBeanIdProperty("id");
 
         Table table = new Table();
         // Add Table columns
-        table.addContainerProperty("id", Integer.class, "");
+        table.addContainerProperty("id", String.class, "");
         table.addContainerProperty("type", String.class, "");
         table.addContainerProperty("description", String.class, "");
         table.addContainerProperty("endpoint", String.class, "");
@@ -163,7 +163,7 @@ public class CloudProviderView extends VerticalLayout implements ValueChangeList
     }
 
     public static class CloudProviderAccountBean {
-        Integer id;
+        String id;
 
         String type;
 
@@ -176,7 +176,7 @@ public class CloudProviderView extends VerticalLayout implements ValueChangeList
         String locations;
 
         public CloudProviderAccountBean(final CloudProviderAccount account) {
-            this.id = account.getId();
+            this.id = account.getUuid();
             this.type = account.getCloudProvider().getCloudProviderType();
             this.description = account.getCloudProvider().getDescription();
             this.endpoint = account.getCloudProvider().getEndpoint();
@@ -192,11 +192,11 @@ public class CloudProviderView extends VerticalLayout implements ValueChangeList
             this.locations = locBuffer.toString();
         }
 
-        public Integer getId() {
+        public String getId() {
             return this.id;
         }
 
-        public void setId(final Integer id) {
+        public void setId(final String id) {
             this.id = id;
         }
 

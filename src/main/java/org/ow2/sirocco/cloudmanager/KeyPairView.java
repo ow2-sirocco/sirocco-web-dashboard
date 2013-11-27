@@ -56,7 +56,7 @@ public class KeyPairView extends VerticalLayout implements ValueChangeListener {
 
     private Table keyPairTable;
 
-    BeanContainer<Integer, KeyPairBean> keyPairs;
+    BeanContainer<String, KeyPairBean> keyPairs;
 
     @Inject
     private ICredentialsManager credentialManager;
@@ -166,7 +166,7 @@ public class KeyPairView extends VerticalLayout implements ValueChangeListener {
     }
 
     Table createkeyPairTable() {
-        this.keyPairs = new BeanContainer<Integer, KeyPairBean>(KeyPairBean.class);
+        this.keyPairs = new BeanContainer<String, KeyPairBean>(KeyPairBean.class);
         this.keyPairs.setBeanIdProperty("id");
         Table table = new Table();
         table.setContainerDataSource(this.keyPairs);
@@ -202,23 +202,23 @@ public class KeyPairView extends VerticalLayout implements ValueChangeListener {
     }
 
     public static class KeyPairBean {
-        Integer id;
+        String id;
 
         String name;
 
         Date created;
 
         KeyPairBean(final Credentials credential) {
-            this.id = credential.getId();
+            this.id = credential.getUuid();
             this.name = credential.getName();
             this.created = credential.getCreated();
         }
 
-        public Integer getId() {
+        public String getId() {
             return this.id;
         }
 
-        public void setId(final Integer id) {
+        public void setId(final String id) {
             this.id = id;
         }
 

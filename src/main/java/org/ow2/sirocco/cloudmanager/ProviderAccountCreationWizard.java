@@ -173,13 +173,11 @@ public class ProviderAccountCreationWizard extends Window implements WizardProgr
             CloudProviderAccount newAccount = null;
             List<CloudProvider> providers = this.providerManager.getCloudProviderByType(provider.getCloudProviderType());
             if (provider.getEndpoint() == null && !providers.isEmpty()) {
-                newAccount = this.providerManager.createCloudProviderAccount(providers.get(0).getId().toString(), account,
-                    options);
+                newAccount = this.providerManager.createCloudProviderAccount(providers.get(0).getUuid(), account, options);
             } else {
                 newAccount = this.providerManager.createCloudProviderAccount(provider, location, account, options);
             }
-            this.providerManager.addCloudProviderAccountToTenant(((MyUI) UI.getCurrent()).getTenantId(), newAccount.getId()
-                .toString());
+            this.providerManager.addCloudProviderAccountToTenant(((MyUI) UI.getCurrent()).getTenantId(), newAccount.getUuid());
         } catch (CloudProviderException e) {
             this.wizard.updateButtons();
             Util.diplayErrorMessageBox("Cannot create account", e);

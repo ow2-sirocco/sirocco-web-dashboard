@@ -64,7 +64,7 @@ public class MachineView extends VerticalSplitPanel implements ValueChangeListen
 
     private Table machineTable;
 
-    BeanContainer<Integer, MachineBean> machines;
+    BeanContainer<String, MachineBean> machines;
 
     @Inject
     private MachineCreationWizard machineCreationWizard;
@@ -110,9 +110,9 @@ public class MachineView extends VerticalSplitPanel implements ValueChangeListen
             @Override
             public void buttonClick(final ClickEvent event) {
                 Set<?> selectedMachineIds = (Set<?>) MachineView.this.machineTable.getValue();
-                Integer id = (Integer) selectedMachineIds.iterator().next();
+                String id = (String) selectedMachineIds.iterator().next();
                 try {
-                    MachineView.this.machineManager.startMachine(id.toString());
+                    MachineView.this.machineManager.startMachine(id);
                 } catch (CloudProviderException e) {
                     Util.diplayErrorMessageBox("Cannot start instance", e);
                 }
@@ -128,9 +128,9 @@ public class MachineView extends VerticalSplitPanel implements ValueChangeListen
             @Override
             public void buttonClick(final ClickEvent event) {
                 Set<?> selectedMachineIds = (Set<?>) MachineView.this.machineTable.getValue();
-                Integer id = (Integer) selectedMachineIds.iterator().next();
+                String id = (String) selectedMachineIds.iterator().next();
                 try {
-                    MachineView.this.machineManager.stopMachine(id.toString());
+                    MachineView.this.machineManager.stopMachine(id);
                 } catch (CloudProviderException e) {
                     Util.diplayErrorMessageBox("Cannot stop instance", e);
                 }
@@ -146,9 +146,9 @@ public class MachineView extends VerticalSplitPanel implements ValueChangeListen
             @Override
             public void buttonClick(final ClickEvent event) {
                 Set<?> selectedMachineIds = (Set<?>) MachineView.this.machineTable.getValue();
-                Integer id = (Integer) selectedMachineIds.iterator().next();
+                String id = (String) selectedMachineIds.iterator().next();
                 try {
-                    MachineView.this.machineManager.restartMachine(id.toString(), false);
+                    MachineView.this.machineManager.restartMachine(id, false);
                 } catch (CloudProviderException e) {
                     Util.diplayErrorMessageBox("Cannot reboot instance", e);
                 }
@@ -234,7 +234,7 @@ public class MachineView extends VerticalSplitPanel implements ValueChangeListen
 
     @SuppressWarnings("serial")
     Table createMachineTable() {
-        this.machines = new BeanContainer<Integer, MachineBean>(MachineBean.class);
+        this.machines = new BeanContainer<String, MachineBean>(MachineBean.class);
         this.machines.setBeanIdProperty("id");
         Table table = new Table();
         table.setContainerDataSource(this.machines);
@@ -313,14 +313,14 @@ public class MachineView extends VerticalSplitPanel implements ValueChangeListen
     }
 
     void updateMachine(final Machine machine) {
-        int index = this.machines.indexOfId(machine.getId());
+        int index = this.machines.indexOfId(machine.getUuid());
         if (index != -1) {
             MachineBean machineBean = new MachineBean(machine);
-            this.machines.removeItem(machine.getId());
+            this.machines.removeItem(machine.getUuid());
             this.machines.addBeanAt(index, machineBean);
             // this.machineTable.setValue(null);
             // this.valueChange(null);
-            if (this.detailView.getMachine().getId().equals(machine.getId())) {
+            if (this.detailView.getMachine().getUuid().equals(machine.getUuid())) {
                 this.detailView.update(machineBean);
             }
         }
@@ -334,7 +334,7 @@ public class MachineView extends VerticalSplitPanel implements ValueChangeListen
     public static class MachineBean {
         Machine machine;
 
-        Integer id;
+        String id;
 
         String name;
 
@@ -356,7 +356,7 @@ public class MachineView extends VerticalSplitPanel implements ValueChangeListen
 
         MachineBean(final Machine machine) {
             this.machine = machine;
-            this.id = machine.getId();
+            this.id = machine.getUuid();
             this.name = machine.getName();
             this.description = machine.getDescription();
             this.state = machine.getState().toString();
@@ -368,11 +368,11 @@ public class MachineView extends VerticalSplitPanel implements ValueChangeListen
             this.location = this.locationFrom(machine);
         }
 
-        public Integer getId() {
+        public String getId() {
             return this.id;
         }
 
-        public void setId(final Integer id) {
+        public void setId(final String id) {
             this.id = id;
         }
 

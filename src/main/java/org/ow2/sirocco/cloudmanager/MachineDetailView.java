@@ -93,7 +93,7 @@ public class MachineDetailView extends VerticalLayout implements MetadataView.Ca
         updatedAttributes.put("properties", metadata);
         try {
             this.machineBean.machine = (Machine) MachineDetailView.this.machineView.machineManager.updateMachineAttributes(
-                MachineDetailView.this.machineBean.getId().toString(), updatedAttributes).getTargetResource();
+                MachineDetailView.this.machineBean.getId(), updatedAttributes).getTargetResource();
         } catch (CloudProviderException e) {
             // TODO
             e.printStackTrace();
@@ -119,8 +119,8 @@ public class MachineDetailView extends VerticalLayout implements MetadataView.Ca
                                 updatedAttributes.put(attributeName, value);
                                 try {
                                     MachineDetailView.this.machineBean.machine = (Machine) MachineDetailView.this.machineView.machineManager
-                                        .updateMachineAttributes(MachineDetailView.this.machineBean.getId().toString(),
-                                            updatedAttributes).getTargetResource();
+                                        .updateMachineAttributes(MachineDetailView.this.machineBean.getId(), updatedAttributes)
+                                        .getTargetResource();
                                 } catch (CloudProviderException e) {
                                     // TODO
                                     e.printStackTrace();
@@ -159,7 +159,7 @@ public class MachineDetailView extends VerticalLayout implements MetadataView.Ca
         this.index = 1;
         this.addAttribute("name", machineBean.getName(), true);
         this.addAttribute("description", machineBean.getDescription(), true);
-        this.addAttribute("id", machine.getId().toString(), false);
+        this.addAttribute("id", machine.getUuid(), false);
         this.addAttribute("tenant", machine.getTenant().getName(), false);
         if (machine.getCreated() != null) {
             this.addAttribute("created", machine.getCreated().toString(), false);
@@ -197,7 +197,7 @@ public class MachineDetailView extends VerticalLayout implements MetadataView.Ca
         this.addAttribute("image", machine.getImage().getName(), false);
         this.addAttribute("config", machine.getConfig().getName(), false);
         this.addAttribute("provider", machine.getCloudProviderAccount().getCloudProvider().getDescription(), false);
-        this.addAttribute("provider account id", machine.getCloudProviderAccount().getId().toString(), false);
+        this.addAttribute("provider account id", machine.getCloudProviderAccount().getUuid(), false);
         this.addAttribute("provider-assigned id", machine.getProviderAssignedId(), false);
         this.addAttribute("location", machine.getLocation().getCountryName(), false);
 

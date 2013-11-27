@@ -64,7 +64,7 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
 
     private Table volumeTable;
 
-    BeanContainer<Integer, VolumeBean> volumes;
+    BeanContainer<String, VolumeBean> volumes;
 
     @Inject
     private VolumeCreationWizard volumeCreationWizard;
@@ -104,17 +104,17 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
             @Override
             public void buttonClick(final ClickEvent event) {
                 Set<?> selectedVolumeIds = (Set<?>) VolumeView.this.volumeTable.getValue();
-                final Integer volumeId = (Integer) selectedVolumeIds.iterator().next();
+                final String volumeId = (String) selectedVolumeIds.iterator().next();
                 List<VolumeAttachDialog.MachineChoice> choices = new ArrayList<>();
                 Volume volume;
                 try {
-                    volume = VolumeView.this.volumeManager.getVolumeById(volumeId.toString());
+                    volume = VolumeView.this.volumeManager.getVolumeByUuid(volumeId);
                     List<Machine> machines = VolumeView.this.machineManager.getMachines().getItems();
                     for (Machine machine : machines) {
                         if (machine.getCloudProviderAccount().getId() == volume.getCloudProviderAccount().getId()
                             && machine.getLocation().getId() == volume.getLocation().getId()) {
                             MachineChoice machineChoice = new MachineChoice();
-                            machineChoice.id = machine.getId();
+                            machineChoice.id = machine.getUuid();
                             machineChoice.name = machine.getName();
                             choices.add(machineChoice);
                         }
@@ -128,13 +128,13 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
                     new VolumeAttachDialog.DialogCallback() {
 
                         @Override
-                        public void response(final Integer machineId, final String location) {
+                        public void response(final String machineId, final String location) {
                             try {
-                                Volume volume = VolumeView.this.volumeManager.getVolumeById(volumeId.toString());
+                                Volume volume = VolumeView.this.volumeManager.getVolumeByUuid(volumeId);
                                 MachineVolume volumeAttachment = new MachineVolume();
                                 volumeAttachment.setInitialLocation(location);
                                 volumeAttachment.setVolume(volume);
-                                VolumeView.this.machineManager.addVolumeToMachine(machineId.toString(), volumeAttachment);
+                                VolumeView.this.machineManager.addVolumeToMachine(machineId, volumeAttachment);
                             } catch (CloudProviderException e) {
                                 Util.diplayErrorMessageBox("Volume attach failure", e);
                             }
@@ -152,12 +152,12 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
             @Override
             public void buttonClick(final ClickEvent event) {
                 Set<?> selectedVolumeIds = (Set<?>) VolumeView.this.volumeTable.getValue();
-                Integer volumeId = (Integer) selectedVolumeIds.iterator().next();
+                String volumeId = (String) selectedVolumeIds.iterator().next();
                 try {
-                    Volume volume = VolumeView.this.volumeManager.getVolumeById(volumeId.toString());
+                    Volume volume = VolumeView.this.volumeManager.getVolumeByUuid(volumeId);
                     MachineVolume volumeAttachment = volume.getAttachments().get(0);
-                    VolumeView.this.machineManager.removeVolumeFromMachine(volumeAttachment.getOwner().getId().toString(),
-                        volumeAttachment.getId().toString());
+                    VolumeView.this.machineManager.removeVolumeFromMachine(volumeAttachment.getOwner().getUuid(),
+                        volumeAttachment.getUuid());
                 } catch (CloudProviderException e) {
                     Util.diplayErrorMessageBox("Volume detach failure", e);
                 }
@@ -230,7 +230,7 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
     }
 
     Table createVolumeTable() {
-        this.volumes = new BeanContainer<Integer, VolumeBean>(VolumeBean.class);
+        this.volumes = new BeanContainer<String, VolumeBean>(VolumeBean.class);
         this.volumes.setBeanIdProperty("id");
         Table table = new Table();
         table.setContainerDataSource(this.volumes);
@@ -290,16 +290,16 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
     }
 
     public void updateVolume(Volume volume) {
-        int index = this.volumes.indexOfId(volume.getId());
+        int index = this.volumes.indexOfId(volume.getUuid());
         if (index != -1) {
             if (volume.getState() != State.DELETED) {
                 try {
-                    volume = this.volumeManager.getVolumeById(volume.getId().toString());
+                    volume = this.volumeManager.getVolumeByUuid(volume.getUuid());
                 } catch (CloudProviderException e) {
                     return;
                 }
             }
-            this.volumes.removeItem(volume.getId());
+            this.volumes.removeItem(volume.getUuid());
             this.volumes.addBeanAt(index, new VolumeBean(volume));
             this.volumeTable.setValue(null);
             this.valueChange(null);
@@ -307,7 +307,7 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
     }
 
     public static class VolumeBean {
-        Integer id;
+        String id;
 
         String name;
 
@@ -322,7 +322,7 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
         String location;
 
         VolumeBean(final Volume volume) {
-            this.id = volume.getId();
+            this.id = volume.getUuid();
             this.name = volume.getName();
             this.state = this.stateFrom(volume);
             this.capacity = Util.printKilobytesValue(volume.getCapacity());
@@ -331,11 +331,11 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
             this.location = this.locationFrom(volume);
         }
 
-        public Integer getId() {
+        public String getId() {
             return this.id;
         }
 
-        public void setId(final Integer id) {
+        public void setId(final String id) {
             this.id = id;
         }
 

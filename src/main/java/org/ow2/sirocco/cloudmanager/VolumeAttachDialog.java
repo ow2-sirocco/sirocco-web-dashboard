@@ -47,7 +47,7 @@ public final class VolumeAttachDialog extends Window implements Button.ClickList
     private TextField deviceField;
 
     public static class MachineChoice {
-        public Integer id;
+        public String id;
 
         public String name;
     }
@@ -104,7 +104,7 @@ public final class VolumeAttachDialog extends Window implements Button.ClickList
         if (event.getSource() == this.okButton) {
             if (this.machineBox.getValue() != null && !this.deviceField.getValue().isEmpty()) {
                 this.close();
-                this.callback.response((Integer) this.machineBox.getValue(), this.deviceField.getValue());
+                this.callback.response((String) this.machineBox.getValue(), this.deviceField.getValue());
             }
         } else {
             this.close();
@@ -112,6 +112,6 @@ public final class VolumeAttachDialog extends Window implements Button.ClickList
     }
 
     public interface DialogCallback {
-        void response(Integer machineId, String location);
+        void response(String machineId, String location);
     }
 }

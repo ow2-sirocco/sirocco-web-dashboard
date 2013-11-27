@@ -22,15 +22,12 @@
  */
 package org.ow2.sirocco.cloudmanager;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import javax.inject.Inject;
 
 import org.ow2.sirocco.cloudmanager.core.api.IMachineImageManager;
 import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
-import org.ow2.sirocco.cloudmanager.core.api.exception.ResourceNotFoundException;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineImage;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.ProviderMapping;
 
@@ -55,7 +52,7 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
 
     private Table machineImageTable;
 
-    BeanContainer<Integer, MachineImageBean> images;
+    BeanContainer<String, MachineImageBean> images;
 
     // @Autowired
     // private MachineImageCreationWizard machineCreationWizard;
@@ -103,7 +100,7 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
                                 try {
                                     MachineImageView.this.machineImageManager.deleteMachineImage(id.toString());
                                     MachineImage machineImage = MachineImageView.this.machineImageManager
-                                        .getMachineImageById(id.toString());
+                                        .getMachineImageByUuid(id.toString());
                                     MachineImageBean newMachineImageBean = new MachineImageBean(machineImage);
                                     int index = MachineImageView.this.images.indexOfId(id);
                                     MachineImageView.this.images.removeItem(id);
@@ -146,7 +143,6 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
         this.machineImageTable.getContainerDataSource().removeAllItems();
         try {
             for (MachineImage machineImage : this.machineImageManager.getMachineImages()) {
-                System.out.println("MachineImage id=" + machineImage.getId() + " name=" + machineImage.getName());
                 this.images.addBean(new MachineImageBean(machineImage));
             }
         } catch (CloudProviderException e) {
@@ -156,7 +152,7 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
     }
 
     Table createMachineImageTable() {
-        this.images = new BeanContainer<Integer, MachineImageBean>(MachineImageBean.class);
+        this.images = new BeanContainer<String, MachineImageBean>(MachineImageBean.class);
         this.images.setBeanIdProperty("id");
         Table table = new Table();
         table.setContainerDataSource(this.images);
@@ -208,39 +204,8 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
         this.refresh();
     }
 
-    void pollMachineImages() {
-        List<Integer> ids = new ArrayList<>(this.images.getItemIds());
-        for (Integer id : ids) {
-            MachineImageBean machineImageBean = this.images.getItem(id).getBean();
-            if (machineImageBean.getState().endsWith("ING")) {
-                try {
-                    MachineImage machineImage = this.machineImageManager.getMachineImageById(id.toString());
-                    System.out.println("MachineImage id=" + id + " state=" + machineImage.getState());
-                    if (!machineImage.getState().toString().endsWith("ING")) {
-
-                        MachineImageBean newMachineImageBean = new MachineImageBean(machineImage);
-                        int index = this.images.indexOfId(id);
-                        this.images.removeItem(id);
-                        this.images.addBeanAt(index, newMachineImageBean);
-                        this.machineImageTable.setValue(null);
-                        this.valueChange(null);
-                        this.getUI().push();
-                    }
-                } catch (ResourceNotFoundException e) {
-                    this.images.removeItem(id);
-                    this.machineImageTable.setValue(null);
-                    this.valueChange(null);
-                    System.out.println("REMOVE PUSH");
-                    this.getUI().push();
-                } catch (CloudProviderException e) {
-                    Util.diplayErrorMessageBox("Internal error", e);
-                }
-            }
-        }
-    }
-
     public static class MachineImageBean {
-        Integer id;
+        String id;
 
         String name;
 
@@ -253,7 +218,7 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
         String location;
 
         MachineImageBean(final MachineImage machineImage) {
-            this.id = machineImage.getId();
+            this.id = machineImage.getUuid();
             this.name = machineImage.getName();
             this.description = machineImage.getDescription();
             this.state = machineImage.getState().toString();
@@ -261,11 +226,11 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
             this.location = this.locationFrom(machineImage);
         }
 
-        public Integer getId() {
+        public String getId() {
             return this.id;
         }
 
-        public void setId(final Integer id) {
+        public void setId(final String id) {
             this.id = id;
         }
 

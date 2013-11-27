@@ -142,7 +142,7 @@ public class Util {
                         try {
                             String accountId = (String) PlacementStep.this.providerBox.getValue();
                             CloudProviderAccount providerAccount = PlacementStep.this.providerManager
-                                .getCloudProviderAccountById(accountId);
+                                .getCloudProviderAccountByUuid(accountId);
                             for (CloudProviderLocation location : providerAccount.getCloudProvider()
                                 .getCloudProviderLocations()) {
                                 PlacementStep.this.locationBox.addItem(location.getCountryName());

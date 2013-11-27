@@ -177,7 +177,7 @@ public class MyUI extends UI implements MessageListener {
         tenantSelect.setImmediate(true);
         rightButtons.addComponent(tenantSelect);
 
-        this.tenantId = user.getTenants().iterator().next().getId().toString();
+        this.tenantId = user.getTenants().iterator().next().getUuid();
         this.identityContext.setTenantId(this.tenantId);
 
         // logged user name

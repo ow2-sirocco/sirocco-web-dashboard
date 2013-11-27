@@ -160,9 +160,9 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
         try {
             this.placementStep.setProviderManager(this.providerManager);
             for (CloudProviderAccount providerAccount : this.providerManager.getCloudProviderAccountsByTenant(tenantId)) {
-                this.placementStep.providerBox.addItem(providerAccount.getId().toString());
-                this.placementStep.providerBox.setItemCaption(providerAccount.getId().toString(), providerAccount
-                    .getCloudProvider().getDescription());
+                this.placementStep.providerBox.addItem(providerAccount.getUuid());
+                this.placementStep.providerBox.setItemCaption(providerAccount.getUuid(), providerAccount.getCloudProvider()
+                    .getDescription());
             }
             if (this.placementStep.providerBox.getItemIds().isEmpty()) {
                 MessageBox.showPlain(Icon.ERROR, "No providers", "First add cloud providers", ButtonId.OK);
@@ -178,8 +178,8 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
         this.keyPairStep.keyPairBox.removeAllItems();
         try {
             for (Credentials cred : this.credentialsManager.getCredentials()) {
-                this.keyPairStep.keyPairBox.addItem(cred.getId());
-                this.keyPairStep.keyPairBox.setItemCaption(cred.getId(), cred.getName());
+                this.keyPairStep.keyPairBox.addItem(cred.getUuid());
+                this.keyPairStep.keyPairBox.setItemCaption(cred.getUuid(), cred.getName());
             }
         } catch (CloudProviderException e) {
             Util.diplayErrorMessageBox("Internal error", e);
@@ -197,8 +197,8 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
                 if (mapping == null) {
                     continue;
                 }
-                this.imageStep.imageBox.addItem(image.getId());
-                this.imageStep.imageBox.setItemCaption(image.getId(), image.getName());
+                this.imageStep.imageBox.addItem(image.getUuid());
+                this.imageStep.imageBox.setItemCaption(image.getUuid(), image.getName());
             }
         } catch (CloudProviderException e) {
             Util.diplayErrorMessageBox("Internal error", e);
@@ -211,8 +211,8 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
                 if (mapping == null) {
                     continue;
                 }
-                this.configStep.configBox.addItem(config.getId());
-                this.configStep.configBox.setItemCaption(config.getId(), config.getName());
+                this.configStep.configBox.addItem(config.getUuid());
+                this.configStep.configBox.setItemCaption(config.getUuid(), config.getName());
             }
         } catch (CloudProviderException e) {
             Util.diplayErrorMessageBox("Internal error", e);
@@ -221,7 +221,7 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
         this.networkStep.nets.removeAllItems();
         try {
             for (Network net : this.networkManager.getNetworks().getItems()) {
-                if (net.getCloudProviderAccount().getId().toString().equals(this.getSelectedProviderAccountId())
+                if (net.getCloudProviderAccount().getUuid().equals(this.getSelectedProviderAccountId())
                     && net.getLocation().getCountryName().equals(this.getSelectedCountry())) {
                     this.networkStep.nets.addBean(new NetBean(net));
                 }
@@ -268,10 +268,10 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
             }
             MachineTemplate machineTemplate = new MachineTemplate();
             MachineConfiguration machineConfig = MachineCreationWizard.this.machineManager
-                .getMachineConfigurationById(((Integer) MachineCreationWizard.this.configStep.configBox.getValue()).toString());
+                .getMachineConfigurationByUuid((MachineCreationWizard.this.configStep.configBox.getValue()).toString());
             machineTemplate.setMachineConfig(machineConfig);
             MachineImage machineImage = MachineCreationWizard.this.machineImageManager
-                .getMachineImageById(((Integer) MachineCreationWizard.this.imageStep.imageBox.getValue()).toString());
+                .getMachineImageByUuid((MachineCreationWizard.this.imageStep.imageBox.getValue()).toString());
             machineTemplate.setMachineImage(machineImage);
 
             // network interfaces
@@ -286,7 +286,7 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
 
             if (MachineCreationWizard.this.keyPairStep.keyPairBox.getValue() != null) {
                 Credentials cred = MachineCreationWizard.this.credentialsManager
-                    .getCredentialsById(((Integer) MachineCreationWizard.this.keyPairStep.keyPairBox.getValue()).toString());
+                    .getCredentialsByUuid((MachineCreationWizard.this.keyPairStep.keyPairBox.getValue()).toString());
                 machineTemplate.setCredential(cred);
             }
 
@@ -415,9 +415,9 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
 
         Table netTable;
 
-        private BeanContainer<Integer, NicBean> nics = new BeanContainer<Integer, NicBean>(NicBean.class);
+        private BeanContainer<String, NicBean> nics = new BeanContainer<String, NicBean>(NicBean.class);
 
-        private BeanContainer<Integer, NetBean> nets = new BeanContainer<Integer, NetBean>(NetBean.class);
+        private BeanContainer<String, NetBean> nets = new BeanContainer<String, NetBean>(NetBean.class);
 
         NetworkStep() {
             this.content = new HorizontalLayout();
@@ -442,9 +442,9 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
                 @Override
                 public void drop(final DragAndDropEvent event) {
                     TableTransferable tableTransferable = (TableTransferable) event.getTransferable();
-                    Integer netId = (Integer) tableTransferable.getItemId();
+                    String netId = (String) tableTransferable.getItemId();
                     AbstractSelectTargetDetails dropData = ((AbstractSelectTargetDetails) event.getTargetDetails());
-                    Integer targetItemId = (Integer) dropData.getItemIdOver();
+                    String targetItemId = (String) dropData.getItemIdOver();
                     VerticalDropLocation location = dropData.getDropLocation();
 
                     if (targetItemId == null) {
@@ -452,7 +452,7 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
                     } else {
 
                         if (location == VerticalDropLocation.MIDDLE || location == VerticalDropLocation.TOP) {
-                            Integer prevItemId = NetworkStep.this.nics.prevItemId(targetItemId);
+                            String prevItemId = NetworkStep.this.nics.prevItemId(targetItemId);
                             NetworkStep.this.nics.addBeanAfter(prevItemId, new NicBean(NetworkStep.this.nets.getItem(netId)
                                 .getBean().net));
                         } else {
@@ -596,7 +596,7 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
     }
 
     public static class NicBean {
-        Integer id;
+        String id;
 
         String network;
 
@@ -606,12 +606,12 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
 
         NicBean(final Network net) {
             this.net = net;
-            this.id = net.getId();
+            this.id = net.getUuid();
             this.network = net.getName();
             this.type = net.getNetworkType().toString();
         }
 
-        public Integer getId() {
+        public String getId() {
             return this.id;
         }
 
@@ -625,7 +625,7 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
     }
 
     public static class NetBean {
-        Integer id;
+        String id;
 
         String network;
 
@@ -635,12 +635,12 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
 
         NetBean(final Network net) {
             this.net = net;
-            this.id = net.getId();
+            this.id = net.getUuid();
             this.network = net.getName();
             this.type = net.getNetworkType().toString();
         }
 
-        public Integer getId() {
+        public String getId() {
             return this.id;
         }
 

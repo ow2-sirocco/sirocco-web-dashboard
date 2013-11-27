@@ -115,9 +115,9 @@ public class NetworkCreationWizard extends Window implements WizardProgressListe
         try {
             this.placementStep.setProviderManager(this.providerManager);
             for (CloudProviderAccount providerAccount : this.providerManager.getCloudProviderAccountsByTenant(tenantId)) {
-                this.placementStep.providerBox.addItem(providerAccount.getId().toString());
-                this.placementStep.providerBox.setItemCaption(providerAccount.getId().toString(), providerAccount
-                    .getCloudProvider().getDescription());
+                this.placementStep.providerBox.addItem(providerAccount.getUuid());
+                this.placementStep.providerBox.setItemCaption(providerAccount.getUuid(), providerAccount.getCloudProvider()
+                    .getDescription());
             }
         } catch (CloudProviderException e) {
             Util.diplayErrorMessageBox("Internal error", e);
