@@ -22,12 +22,16 @@
  */
 package org.ow2.sirocco.cloudmanager.util;
 
-import com.vaadin.ui.Alignment;
+import com.vaadin.event.ShortcutAction.KeyCode;
+import com.vaadin.ui.AbstractTextField;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.FormLayout;
 import com.vaadin.ui.HorizontalLayout;
+import com.vaadin.ui.Label;
+import com.vaadin.ui.PasswordField;
 import com.vaadin.ui.TextField;
+import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
 
 public final class InputDialog extends Window implements Button.ClickListener {
@@ -39,9 +43,20 @@ public final class InputDialog extends Window implements Button.ClickListener {
 
     private final Button cancelButton;
 
-    private TextField textField;
+    private AbstractTextField textField;
 
-    public InputDialog(final String title, final String name, final String initialValue, final DialogCallback callback) {
+    public static InputDialog newInputDialog(final String title, final String name, final String initialValue,
+        final DialogCallback callback) {
+        return new InputDialog(title, name, initialValue, false, callback);
+    }
+
+    public static InputDialog newPasswordDialog(final String title, final String name, final String initialValue,
+        final DialogCallback callback) {
+        return new InputDialog(title, name, initialValue, true, callback);
+    }
+
+    private InputDialog(final String title, final String name, final String initialValue, final boolean isPassword,
+        final DialogCallback callback) {
         super(title);
         this.callback = callback;
         this.center();
@@ -49,14 +64,18 @@ public final class InputDialog extends Window implements Button.ClickListener {
         this.setModal(true);
         this.setResizable(false);
 
+        VerticalLayout verticalLayout = new VerticalLayout();
+        verticalLayout.setSpacing(true);
+        verticalLayout.setMargin(true);
+
         FormLayout content = new FormLayout();
         content.setMargin(true);
         content.setWidth("400px");
-        content.setHeight("150px");
+        content.setHeight("100px");
 
-        this.textField = new TextField(name);
+        this.textField = isPassword ? new PasswordField(name) : new TextField(name);
         this.textField.setRequired(true);
-        this.textField.setWidth("80%");
+        this.textField.setWidth("100%");
         this.textField.setRequired(true);
         this.textField.setRequiredError("Please provide a " + name);
         this.textField.setImmediate(true);
@@ -65,17 +84,28 @@ public final class InputDialog extends Window implements Button.ClickListener {
         }
         content.addComponent(this.textField);
 
+        verticalLayout.addComponent(content);
+
         final HorizontalLayout buttonLayout = new HorizontalLayout();
         buttonLayout.setSpacing(true);
+        buttonLayout.setWidth("100%");
+        Label spacer = new Label("");
+        buttonLayout.addComponent(spacer);
+        spacer.setWidth("100%");
+        buttonLayout.setExpandRatio(spacer, 1f);
         this.okButton = new Button("Ok", this);
+        this.okButton.setClickShortcut(KeyCode.ENTER, null);
         this.cancelButton = new Button("Cancel", this);
+        this.cancelButton.setClickShortcut(KeyCode.ESCAPE, null);
         this.cancelButton.focus();
         buttonLayout.addComponent(this.okButton);
         buttonLayout.addComponent(this.cancelButton);
         content.addComponent(buttonLayout);
-        content.setComponentAlignment(buttonLayout, Alignment.BOTTOM_RIGHT);
+        // content.setComponentAlignment(buttonLayout, Alignment.BOTTOM_RIGHT);
 
-        this.setContent(content);
+        verticalLayout.addComponent(buttonLayout);
+
+        this.setContent(verticalLayout);
     }
 
     public void buttonClick(final ClickEvent event) {

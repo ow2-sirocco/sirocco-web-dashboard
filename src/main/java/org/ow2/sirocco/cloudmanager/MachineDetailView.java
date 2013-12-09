@@ -110,7 +110,7 @@ public class MachineDetailView extends VerticalLayout implements MetadataView.Ca
             editAttribute = new Button("edit");
             editAttribute.addClickListener(new Button.ClickListener() {
                 public void buttonClick(final ClickEvent event) {
-                    InputDialog inputDialog = new InputDialog("Enter " + attributeName, attributeName, value,
+                    InputDialog inputDialog = InputDialog.newInputDialog("Enter " + attributeName, attributeName, value,
                         new InputDialog.DialogCallback() {
 
                             @Override
