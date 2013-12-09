@@ -26,6 +26,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.vaadin.data.Container;
+import com.vaadin.event.ItemClickEvent;
+import com.vaadin.event.ItemClickEvent.ItemClickListener;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.Button.ClickListener;
@@ -101,16 +103,32 @@ public class MetadataView extends VerticalLayout {
                     if (propertyId.equals("key")) {
                         return new TextField();
                     } else if (propertyId.equals("value")) {
-                        return new TextField();
+                        TextField tf = new TextField();
+                        tf.setWidth("395px");
+                        return tf;
                     }
                 }
                 return null;
             }
         });
+
+        this.metadataTable.addItemClickListener(new ItemClickListener() {
+            @Override
+            public void itemClick(final ItemClickEvent event) {
+                if (event.isDoubleClick()) {
+                    if (!event.getItemId().equals(MetadataView.ADD_METADATA_ITEM_ID)) {
+                        MetadataView.this.metadataTable.getItem(MetadataView.ADD_METADATA_ITEM_ID).getItemProperty("key")
+                            .setValue(event.getItem().getItemProperty("key").getValue());
+                        MetadataView.this.metadataTable.getItem(MetadataView.ADD_METADATA_ITEM_ID).getItemProperty("value")
+                            .setValue(event.getItem().getItemProperty("value").getValue());
+                    }
+                }
+            }
+        });
         this.metadataTable.setEditable(true);
 
         this.metadataTable.setColumnWidth("key", 200);
-        this.metadataTable.setColumnWidth("value", 200);
+        this.metadataTable.setColumnWidth("value", 400);
     }
 
     public void init(final Map<String, String> metadata) {
