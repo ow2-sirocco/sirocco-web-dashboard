@@ -42,26 +42,35 @@ import com.vaadin.ui.Button.ClickListener;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.Table;
+import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
+import com.vaadin.ui.VerticalSplitPanel;
 
 @UIScoped
-public class MachineImageView extends VerticalLayout implements ValueChangeListener {
+public class MachineImageView extends VerticalSplitPanel implements ValueChangeListener {
     private static final long serialVersionUID = 1L;
+
+    private Button registerMachineImageButton;
 
     private Button deleteMachineImageButton;
 
     private Table machineImageTable;
 
+    private MachineImageDetailView detailView;
+
     BeanContainer<String, MachineImageBean> images;
 
-    // @Autowired
-    // private MachineImageCreationWizard machineCreationWizard;
+    @Inject
+    private MachineImageRegisterWizard machineImageRegisterWizard;
 
     @Inject
-    private IMachineImageManager machineImageManager;
+    IMachineImageManager machineImageManager;
 
     public MachineImageView() {
         this.setSizeFull();
+
+        VerticalLayout verticalLayout = new VerticalLayout();
+        verticalLayout.setSizeFull();
 
         HorizontalLayout actionButtonHeader = new HorizontalLayout();
         actionButtonHeader.setMargin(true);
@@ -69,17 +78,18 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
         actionButtonHeader.setWidth("100%");
         actionButtonHeader.setHeight("50px");
 
-        Button button = new Button("Create Image...");
-        button.setIcon(new ThemeResource("img/add.png"));
-        button.addClickListener(new ClickListener() {
+        this.registerMachineImageButton = new Button("Register Image...");
+        this.registerMachineImageButton.setIcon(new ThemeResource("img/add.png"));
+        this.registerMachineImageButton.addClickListener(new ClickListener() {
 
             @Override
             public void buttonClick(final ClickEvent event) {
-                // MachineImageView.this.machineCreationWizard.init(MachineImageView.this);
-                // UI.getCurrent().addWindow(MachineImageView.this.machineCreationWizard);
+                if (MachineImageView.this.machineImageRegisterWizard.init(MachineImageView.this)) {
+                    UI.getCurrent().addWindow(MachineImageView.this.machineImageRegisterWizard);
+                }
             }
         });
-        actionButtonHeader.addComponent(button);
+        actionButtonHeader.addComponent(this.registerMachineImageButton);
 
         this.deleteMachineImageButton = new Button("Delete");
         this.deleteMachineImageButton.setIcon(new ThemeResource("img/delete.png"));
@@ -123,7 +133,7 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
         actionButtonHeader.addComponent(spacer);
         actionButtonHeader.setExpandRatio(spacer, 1.0f);
 
-        button = new Button("Refresh", new ClickListener() {
+        Button button = new Button("Refresh", new ClickListener() {
 
             @Override
             public void buttonClick(final ClickEvent event) {
@@ -133,9 +143,13 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
         button.setIcon(new ThemeResource("img/refresh.png"));
         actionButtonHeader.addComponent(button);
 
-        this.addComponent(actionButtonHeader);
-        this.addComponent(this.machineImageTable = this.createMachineImageTable());
-        this.setExpandRatio(this.machineImageTable, 1.0f);
+        verticalLayout.addComponent(actionButtonHeader);
+        verticalLayout.addComponent(this.machineImageTable = this.createMachineImageTable());
+        verticalLayout.setExpandRatio(this.machineImageTable, 1.0f);
+
+        this.setFirstComponent(verticalLayout);
+        this.setSecondComponent(this.detailView = new MachineImageDetailView(this));
+        this.setSplitPosition(60.0f);
 
     }
 
@@ -179,10 +193,12 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
         Set<?> selectedMachineImageIds = (Set<?>) this.machineImageTable.getValue();
         if (selectedMachineImageIds != null && selectedMachineImageIds.size() > 0) {
             if (selectedMachineImageIds.size() == 1) {
-                String state = (String) this.machineImageTable.getItem(selectedMachineImageIds.iterator().next())
-                    .getItemProperty("state").getValue();
+                Object id = selectedMachineImageIds.iterator().next();
+                String state = (String) this.machineImageTable.getItem(id).getItemProperty("state").getValue();
                 this.deleteMachineImageButton.setEnabled(!state.endsWith("DELETING"));
+                this.detailView.update(this.images.getItem(id).getBean());
             } else {
+                this.detailView.hide();
                 boolean allowMultiDelete = true;
                 for (Object machineId : selectedMachineImageIds) {
                     String state = (String) this.machineImageTable.getItem(machineId).getItemProperty("state").getValue();
@@ -194,6 +210,7 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
                 this.deleteMachineImageButton.setEnabled(allowMultiDelete);
             }
         } else {
+            this.detailView.hide();
             this.deleteMachineImageButton.setEnabled(false);
         }
     }
@@ -204,7 +221,15 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
         this.refresh();
     }
 
+    MachineImageBean updateMachineImageAttribute(final MachineImageBean machineImageBean, final String attribute,
+        final String value) {
+        this.machineImageTable.getItem(machineImageBean.getId()).getItemProperty(attribute).setValue(value);
+        return this.images.getItem(machineImageBean.getId()).getBean();
+    }
+
     public static class MachineImageBean {
+        MachineImage machineImage;
+
         String id;
 
         String name;
@@ -218,6 +243,7 @@ public class MachineImageView extends VerticalLayout implements ValueChangeListe
         String location;
 
         MachineImageBean(final MachineImage machineImage) {
+            this.machineImage = machineImage;
             this.id = machineImage.getUuid();
             this.name = machineImage.getName();
             this.description = machineImage.getDescription();

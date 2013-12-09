@@ -28,6 +28,7 @@ import org.ow2.sirocco.cloudmanager.core.api.ICloudProviderManager;
 import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProviderAccount;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProviderLocation;
+import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProviderProfile;
 
 import com.vaadin.cdi.UIScoped;
 import com.vaadin.data.Property;
@@ -44,23 +45,29 @@ import com.vaadin.ui.Label;
 import com.vaadin.ui.Table;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
+import com.vaadin.ui.VerticalSplitPanel;
 
 @UIScoped
-public class CloudProviderView extends VerticalLayout implements ValueChangeListener {
+public class CloudProviderView extends VerticalSplitPanel implements ValueChangeListener {
     private static final long serialVersionUID = 1L;
 
     private Table providerAccountTable;
 
     BeanContainer<String, CloudProviderAccountBean> providerAccounts;
 
+    private ProviderAccountDetailView detailView;
+
     @Inject
-    private ICloudProviderManager cloudProviderManager;
+    ICloudProviderManager cloudProviderManager;
 
     @Inject
     private ProviderAccountCreationWizard providerAccountCreationWizard;
 
     public CloudProviderView() {
         this.setSizeFull();
+
+        VerticalLayout verticalLayout = new VerticalLayout();
+        verticalLayout.setSizeFull();
 
         HorizontalLayout actionButtonHeader = new HorizontalLayout();
         actionButtonHeader.setMargin(true);
@@ -95,11 +102,13 @@ public class CloudProviderView extends VerticalLayout implements ValueChangeList
         button.setIcon(new ThemeResource("img/refresh.png"));
         actionButtonHeader.addComponent(button);
 
-        this.addComponent(actionButtonHeader);
-        this.addComponent(this.providerAccountTable = this.createCloudProviderAccountTable());
-        this.setExpandRatio(this.providerAccountTable, 1.0f);
+        verticalLayout.addComponent(actionButtonHeader);
+        verticalLayout.addComponent(this.providerAccountTable = this.createCloudProviderAccountTable());
+        verticalLayout.setExpandRatio(this.providerAccountTable, 1.0f);
 
-        // refresh();
+        this.setFirstComponent(verticalLayout);
+        this.setSecondComponent(this.detailView = new ProviderAccountDetailView(this));
+        this.setSplitPosition(60.0f);
     }
 
     void refresh() {
@@ -107,7 +116,9 @@ public class CloudProviderView extends VerticalLayout implements ValueChangeList
         try {
             for (CloudProviderAccount providerAccount : this.cloudProviderManager.getCloudProviderAccountsByTenant(((MyUI) UI
                 .getCurrent()).getTenantId())) {
-                this.providerAccounts.addBean(new CloudProviderAccountBean(providerAccount));
+                CloudProviderProfile profile = this.cloudProviderManager.getCloudProviderProfileByType(providerAccount
+                    .getCloudProvider().getCloudProviderType());
+                this.providerAccounts.addBean(new CloudProviderAccountBean(providerAccount, profile));
             }
         } catch (CloudProviderException e) {
             e.printStackTrace();
@@ -121,9 +132,8 @@ public class CloudProviderView extends VerticalLayout implements ValueChangeList
 
         Table table = new Table();
         // Add Table columns
-        table.addContainerProperty("id", String.class, "");
+        table.addContainerProperty("name", String.class, "");
         table.addContainerProperty("type", String.class, "");
-        table.addContainerProperty("description", String.class, "");
         table.addContainerProperty("endpoint", String.class, "");
         table.addContainerProperty("login", String.class, "");
         table.addContainerProperty("locations", String.class, "");
@@ -134,7 +144,7 @@ public class CloudProviderView extends VerticalLayout implements ValueChangeList
 
         table.addGeneratedColumn("locations", new LocationsColumnGenerator());
 
-        table.setVisibleColumns("id", "type", "description", "endpoint", "login", "locations");
+        table.setVisibleColumns("name", "type", "endpoint", "login", "locations");
         table.setSelectable(true);
         table.setImmediate(true);
 
@@ -154,6 +164,12 @@ public class CloudProviderView extends VerticalLayout implements ValueChangeList
 
     @Override
     public void valueChange(final ValueChangeEvent event) {
+        Object selectedAccountId = this.providerAccountTable.getValue();
+        if (selectedAccountId != null) {
+            this.detailView.update(this.providerAccounts.getItem(selectedAccountId).getBean());
+        } else {
+            this.detailView.hide();
+        }
     }
 
     @Override
@@ -162,12 +178,22 @@ public class CloudProviderView extends VerticalLayout implements ValueChangeList
         this.refresh();
     }
 
+    CloudProviderAccountBean updateProviderAccountAttribute(final CloudProviderAccountBean accountBean, final String attribute,
+        final String value) {
+        this.providerAccountTable.getItem(accountBean.getId()).getItemProperty(attribute).setValue(value);
+        return this.providerAccounts.getItem(accountBean.getId()).getBean();
+    }
+
     public static class CloudProviderAccountBean {
+        CloudProviderAccount account;
+
+        CloudProviderProfile profile;
+
         String id;
 
         String type;
 
-        String description;
+        String name;
 
         String endpoint;
 
@@ -175,10 +201,12 @@ public class CloudProviderView extends VerticalLayout implements ValueChangeList
 
         String locations;
 
-        public CloudProviderAccountBean(final CloudProviderAccount account) {
+        public CloudProviderAccountBean(final CloudProviderAccount account, final CloudProviderProfile profile) {
+            this.account = account;
+            this.profile = profile;
             this.id = account.getUuid();
             this.type = account.getCloudProvider().getCloudProviderType();
-            this.description = account.getCloudProvider().getDescription();
+            this.name = account.getCloudProvider().getDescription();
             this.endpoint = account.getCloudProvider().getEndpoint();
             this.login = account.getLogin();
             StringBuffer locBuffer = new StringBuffer();
@@ -208,12 +236,12 @@ public class CloudProviderView extends VerticalLayout implements ValueChangeList
             this.type = type;
         }
 
-        public String getDescription() {
-            return this.description;
+        public String getName() {
+            return this.name;
         }
 
-        public void setDescription(final String description) {
-            this.description = description;
+        public void setName(final String name) {
+            this.name = name;
         }
 
         public String getEndpoint() {
