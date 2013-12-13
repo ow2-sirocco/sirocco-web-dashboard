@@ -35,6 +35,7 @@ import com.vaadin.cdi.UIScoped;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.data.util.BeanContainer;
+import com.vaadin.data.util.BeanItem;
 import com.vaadin.server.ThemeResource;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
@@ -100,29 +101,28 @@ public class MachineImageView extends VerticalSplitPanel implements ValueChangeL
             public void buttonClick(final ClickEvent event) {
                 final Set<?> selectedImageIds = (Set<?>) MachineImageView.this.machineImageTable.getValue();
                 String name = MachineImageView.this.images.getItem(selectedImageIds.iterator().next()).getBean().getName();
-                ConfirmDialog confirmDialog = new ConfirmDialog("Delete Image", "Are you sure you want to delete image " + name
-                    + " ?", "Ok", "Cancel", new ConfirmDialog.ConfirmationDialogCallback() {
+                ConfirmDialog confirmDialog = ConfirmDialog.newConfirmDialogWithOption("Delete Image",
+                    "Are you sure you want to delete image " + name + " ?", "delete image on provider",
+                    new ConfirmDialog.ConfirmationDialogCallback() {
 
-                    @Override
-                    public void response(final boolean ok) {
-                        if (ok) {
-                            for (Object id : selectedImageIds) {
-                                try {
-                                    MachineImageView.this.machineImageManager.deleteMachineImage(id.toString());
-                                    MachineImage machineImage = MachineImageView.this.machineImageManager
-                                        .getMachineImageByUuid(id.toString());
-                                    MachineImageBean newMachineImageBean = new MachineImageBean(machineImage);
-                                    int index = MachineImageView.this.images.indexOfId(id);
-                                    MachineImageView.this.images.removeItem(id);
-                                    MachineImageView.this.images.addBeanAt(index, newMachineImageBean);
-                                } catch (CloudProviderException e) {
-                                    Util.diplayErrorMessageBox("Image delete failure", e);
+                        @Override
+                        public void response(final boolean ok, final boolean deleteOnProvider) {
+                            if (ok) {
+                                for (Object id : selectedImageIds) {
+                                    try {
+                                        if (deleteOnProvider) {
+                                            MachineImageView.this.machineImageManager.deleteMachineImage(id.toString());
+                                        } else {
+                                            MachineImageView.this.machineImageManager.unregisterMachineImage(id.toString());
+                                        }
+                                    } catch (CloudProviderException e) {
+                                        Util.diplayErrorMessageBox("Image delete failure", e);
+                                    }
                                 }
+                                MachineImageView.this.valueChange(null);
                             }
-                            MachineImageView.this.valueChange(null);
                         }
-                    }
-                });
+                    });
                 MachineImageView.this.getUI().addWindow(confirmDialog);
             }
         });
@@ -163,6 +163,20 @@ public class MachineImageView extends VerticalSplitPanel implements ValueChangeL
             Util.diplayErrorMessageBox("Internal error", e);
         }
         this.valueChange(null);
+    }
+
+    void updateMachineImage(final MachineImage machineImage) {
+        BeanItem<MachineImageBean> item = this.images.getItem(machineImage.getUuid());
+        if (item != null) {
+            MachineImageBean machineImageBean = item.getBean();
+            machineImageBean.init(machineImage);
+            item.getItemProperty("state").setValue(machineImageBean.getState());
+            item.getItemProperty("name").setValue(machineImageBean.getName());
+            if (this.detailView.getMachineImage().getUuid().equals(machineImage.getUuid())) {
+                this.detailView.update(machineImageBean);
+            }
+            this.valueChange(null);
+        }
     }
 
     Table createMachineImageTable() {
@@ -243,6 +257,10 @@ public class MachineImageView extends VerticalSplitPanel implements ValueChangeL
         String location;
 
         MachineImageBean(final MachineImage machineImage) {
+            this.init(machineImage);
+        }
+
+        void init(final MachineImage machineImage) {
             this.machineImage = machineImage;
             this.id = machineImage.getUuid();
             this.name = machineImage.getName();

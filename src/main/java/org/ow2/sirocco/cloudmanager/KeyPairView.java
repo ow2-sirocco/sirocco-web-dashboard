@@ -108,25 +108,25 @@ public class KeyPairView extends VerticalLayout implements ValueChangeListener {
             public void buttonClick(final ClickEvent event) {
                 final Set<?> selectedKeyPairIds = (Set<?>) KeyPairView.this.keyPairTable.getValue();
                 String name = KeyPairView.this.keyPairs.getItem(selectedKeyPairIds.iterator().next()).getBean().getName();
-                ConfirmDialog confirmDialog = new ConfirmDialog("Delete Image", "Are you sure you want to delete key pair "
-                    + name + " ?", "Ok", "Cancel", new ConfirmDialog.ConfirmationDialogCallback() {
+                ConfirmDialog confirmDialog = ConfirmDialog.newConfirmDialog("Delete Image",
+                    "Are you sure you want to delete key pair " + name + " ?", new ConfirmDialog.ConfirmationDialogCallback() {
 
-                    @Override
-                    public void response(final boolean ok) {
-                        if (ok) {
-                            for (Object id : selectedKeyPairIds) {
-                                try {
-                                    KeyPairView.this.credentialManager.deleteCredentials(id.toString());
-                                    KeyPairView.this.keyPairs.removeItem(id);
-                                } catch (CloudProviderException e) {
-                                    e.printStackTrace();
+                        @Override
+                        public void response(final boolean ok, final boolean ignored) {
+                            if (ok) {
+                                for (Object id : selectedKeyPairIds) {
+                                    try {
+                                        KeyPairView.this.credentialManager.deleteCredentials(id.toString());
+                                        KeyPairView.this.keyPairs.removeItem(id);
+                                    } catch (CloudProviderException e) {
+                                        e.printStackTrace();
+                                    }
                                 }
+                                KeyPairView.this.keyPairTable.setValue(null);
+                                KeyPairView.this.valueChange(null);
                             }
-                            KeyPairView.this.keyPairTable.setValue(null);
-                            KeyPairView.this.valueChange(null);
                         }
-                    }
-                });
+                    });
                 KeyPairView.this.getUI().addWindow(confirmDialog);
             }
         });

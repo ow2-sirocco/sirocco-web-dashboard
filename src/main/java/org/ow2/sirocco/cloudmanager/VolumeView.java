@@ -42,6 +42,7 @@ import com.vaadin.data.Item;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.data.util.BeanContainer;
+import com.vaadin.data.util.BeanItem;
 import com.vaadin.server.ThemeResource;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
@@ -174,23 +175,23 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
             public void buttonClick(final ClickEvent event) {
                 final Set<?> selectedVolumeIds = (Set<?>) VolumeView.this.volumeTable.getValue();
                 String name = VolumeView.this.volumes.getItem(selectedVolumeIds.iterator().next()).getBean().getName();
-                ConfirmDialog confirmDialog = new ConfirmDialog("Delete Volume", "Are you sure you want to delete volume "
-                    + name + " ?", "Ok", "Cancel", new ConfirmDialog.ConfirmationDialogCallback() {
+                ConfirmDialog confirmDialog = ConfirmDialog.newConfirmDialog("Delete Volume",
+                    "Are you sure you want to delete volume " + name + " ?", new ConfirmDialog.ConfirmationDialogCallback() {
 
-                    @Override
-                    public void response(final boolean ok) {
-                        if (ok) {
-                            for (Object id : selectedVolumeIds) {
-                                try {
-                                    VolumeView.this.volumeManager.deleteVolume(id.toString());
-                                } catch (CloudProviderException e) {
-                                    Util.diplayErrorMessageBox("Volume delete failure", e);
+                        @Override
+                        public void response(final boolean ok, final boolean ignored) {
+                            if (ok) {
+                                for (Object id : selectedVolumeIds) {
+                                    try {
+                                        VolumeView.this.volumeManager.deleteVolume(id.toString());
+                                    } catch (CloudProviderException e) {
+                                        Util.diplayErrorMessageBox("Volume delete failure", e);
+                                    }
                                 }
+                                VolumeView.this.valueChange(null);
                             }
-                            VolumeView.this.valueChange(null);
                         }
-                    }
-                });
+                    });
                 VolumeView.this.getUI().addWindow(confirmDialog);
             }
         });
@@ -290,8 +291,8 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
     }
 
     public void updateVolume(Volume volume) {
-        int index = this.volumes.indexOfId(volume.getUuid());
-        if (index != -1) {
+        BeanItem<VolumeBean> item = this.volumes.getItem(volume.getUuid());
+        if (item != null) {
             if (volume.getState() != State.DELETED) {
                 try {
                     volume = this.volumeManager.getVolumeByUuid(volume.getUuid());
@@ -299,9 +300,10 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
                     return;
                 }
             }
-            this.volumes.removeItem(volume.getUuid());
-            this.volumes.addBeanAt(index, new VolumeBean(volume));
-            this.volumeTable.setValue(null);
+            VolumeBean volumeBean = item.getBean();
+            volumeBean.init(volume);
+            item.getItemProperty("state").setValue(volumeBean.getState());
+            item.getItemProperty("name").setValue(volumeBean.getName());
             this.valueChange(null);
         }
     }
@@ -322,6 +324,10 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
         String location;
 
         VolumeBean(final Volume volume) {
+            this.init(volume);
+        }
+
+        void init(final Volume volume) {
             this.id = volume.getUuid();
             this.name = volume.getName();
             this.state = this.stateFrom(volume);

@@ -35,6 +35,7 @@ import com.vaadin.cdi.UIScoped;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.data.util.BeanContainer;
+import com.vaadin.data.util.BeanItem;
 import com.vaadin.server.ThemeResource;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
@@ -92,23 +93,23 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
             public void buttonClick(final ClickEvent event) {
                 final Set<?> selectedNetworkIds = (Set<?>) NetworkView.this.networkTable.getValue();
                 String name = NetworkView.this.networks.getItem(selectedNetworkIds.iterator().next()).getBean().getName();
-                ConfirmDialog confirmDialog = new ConfirmDialog("Delete Network", "Are you sure you want to delete network "
-                    + name + " ?", "Ok", "Cancel", new ConfirmDialog.ConfirmationDialogCallback() {
+                ConfirmDialog confirmDialog = ConfirmDialog.newConfirmDialog("Delete Network",
+                    "Are you sure you want to delete network " + name + " ?", new ConfirmDialog.ConfirmationDialogCallback() {
 
-                    @Override
-                    public void response(final boolean ok) {
-                        if (ok) {
-                            for (Object id : selectedNetworkIds) {
-                                try {
-                                    NetworkView.this.networkManager.deleteNetwork(id.toString());
-                                } catch (CloudProviderException e) {
-                                    e.printStackTrace();
+                        @Override
+                        public void response(final boolean ok, final boolean ignored) {
+                            if (ok) {
+                                for (Object id : selectedNetworkIds) {
+                                    try {
+                                        NetworkView.this.networkManager.deleteNetwork(id.toString());
+                                    } catch (CloudProviderException e) {
+                                        e.printStackTrace();
+                                    }
                                 }
+                                NetworkView.this.valueChange(null);
                             }
-                            NetworkView.this.valueChange(null);
                         }
-                    }
-                });
+                    });
                 NetworkView.this.getUI().addWindow(confirmDialog);
             }
         });
@@ -202,11 +203,12 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
     }
 
     public void updateNetwork(final Network network) {
-        int index = this.networks.indexOfId(network.getUuid());
-        if (index != -1) {
-            this.networks.removeItem(network.getUuid());
-            this.networks.addBeanAt(index, new NetworkBean(network));
-            this.networkTable.setValue(null);
+        BeanItem<NetworkBean> item = this.networks.getItem(network.getUuid());
+        if (item != null) {
+            NetworkBean networkBean = item.getBean();
+            networkBean.init(network);
+            item.getItemProperty("state").setValue(networkBean.getState());
+            item.getItemProperty("name").setValue(networkBean.getName());
             this.valueChange(null);
         }
     }
@@ -227,6 +229,10 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
         String location;
 
         NetworkBean(final Network network) {
+            this.init(network);
+        }
+
+        void init(final Network network) {
             this.id = network.getUuid();
             this.name = network.getName();
             this.description = network.getDescription();

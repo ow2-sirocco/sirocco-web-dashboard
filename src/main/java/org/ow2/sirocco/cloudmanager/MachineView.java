@@ -38,6 +38,7 @@ import com.vaadin.data.Property;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.data.util.BeanContainer;
+import com.vaadin.data.util.BeanItem;
 import com.vaadin.server.ThemeResource;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Button;
@@ -172,11 +173,11 @@ public class MachineView extends VerticalSplitPanel implements ValueChangeListen
                 } else {
                     sb.append(" these " + selectedMachineIds.size() + " instances ?");
                 }
-                ConfirmDialog confirmDialog = new ConfirmDialog("Delete Machine", sb.toString(), "Ok", "Cancel",
+                ConfirmDialog confirmDialog = ConfirmDialog.newConfirmDialog("Delete Machine", sb.toString(),
                     new ConfirmDialog.ConfirmationDialogCallback() {
 
                         @Override
-                        public void response(final boolean ok) {
+                        public void response(final boolean ok, final boolean ignored) {
                             if (ok) {
                                 for (Object id : selectedMachineIds) {
                                     try {
@@ -313,16 +314,17 @@ public class MachineView extends VerticalSplitPanel implements ValueChangeListen
     }
 
     void updateMachine(final Machine machine) {
-        int index = this.machines.indexOfId(machine.getUuid());
-        if (index != -1) {
-            MachineBean machineBean = new MachineBean(machine);
-            this.machines.removeItem(machine.getUuid());
-            this.machines.addBeanAt(index, machineBean);
-            // this.machineTable.setValue(null);
-            // this.valueChange(null);
+        BeanItem<MachineBean> item = this.machines.getItem(machine.getUuid());
+        if (item != null) {
+            MachineBean machineBean = item.getBean();
+            machineBean.init(machine);
+            item.getItemProperty("state").setValue(machineBean.getState());
+            item.getItemProperty("addresses").setValue(machineBean.getAddresses());
+            item.getItemProperty("name").setValue(machineBean.getName());
             if (this.detailView.getMachine().getUuid().equals(machine.getUuid())) {
                 this.detailView.update(machineBean);
             }
+            this.valueChange(null);
         }
     }
 
@@ -355,6 +357,10 @@ public class MachineView extends VerticalSplitPanel implements ValueChangeListen
         String location;
 
         MachineBean(final Machine machine) {
+            this.init(machine);
+        }
+
+        void init(final Machine machine) {
             this.machine = machine;
             this.id = machine.getUuid();
             this.name = machine.getName();
