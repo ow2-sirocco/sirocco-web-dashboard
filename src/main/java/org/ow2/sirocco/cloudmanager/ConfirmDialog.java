@@ -25,6 +25,7 @@ package org.ow2.sirocco.cloudmanager;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
+import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.VerticalLayout;
@@ -38,12 +39,24 @@ public final class ConfirmDialog extends Window implements Button.ClickListener 
 
     private final ConfirmationDialogCallback callback;
 
+    private CheckBox optionBox;
+
     private final Button okButton;
 
     private final Button cancelButton;
 
-    public ConfirmDialog(final String caption, final String question, final String okLabel, final String cancelLabel,
+    public static ConfirmDialog newConfirmDialogWithOption(final String caption, final String question, final String option,
         final ConfirmationDialogCallback callback) {
+        return new ConfirmDialog(caption, question, option, "Ok", "Cancel", callback);
+    }
+
+    public static ConfirmDialog newConfirmDialog(final String caption, final String question,
+        final ConfirmationDialogCallback callback) {
+        return new ConfirmDialog(caption, question, null, "Ok", "Cancel", callback);
+    }
+
+    private ConfirmDialog(final String caption, final String question, final String option, final String okLabel,
+        final String cancelLabel, final ConfirmationDialogCallback callback) {
 
         super(caption);
         this.center();
@@ -62,6 +75,10 @@ public final class ConfirmDialog extends Window implements Button.ClickListener 
             Label label = new Label(question);
             content.addComponent(label);
         }
+        if (option != null) {
+            this.optionBox = new CheckBox(option);
+            content.addComponent(this.optionBox);
+        }
 
         final HorizontalLayout buttonLayout = new HorizontalLayout();
         buttonLayout.setSpacing(true);
@@ -79,11 +96,11 @@ public final class ConfirmDialog extends Window implements Button.ClickListener 
 
     public void buttonClick(final ClickEvent event) {
         this.close();
-        this.callback.response(event.getSource() == this.okButton);
+        this.callback.response(event.getSource() == this.okButton, this.optionBox != null ? this.optionBox.getValue() : false);
     }
 
     public interface ConfirmationDialogCallback {
 
-        void response(boolean ok);
+        void response(boolean ok, boolean option);
     }
 }
