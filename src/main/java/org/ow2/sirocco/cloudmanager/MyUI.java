@@ -39,6 +39,7 @@ import org.ow2.sirocco.cloudmanager.core.api.IdentityContext;
 import org.ow2.sirocco.cloudmanager.core.api.ResourceStateChangeEvent;
 import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
 import org.ow2.sirocco.cloudmanager.model.cimi.Machine;
+import org.ow2.sirocco.cloudmanager.model.cimi.MachineImage;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineVolume;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineVolume.State;
 import org.ow2.sirocco.cloudmanager.model.cimi.Network;
@@ -404,6 +405,13 @@ public class MyUI extends UI implements MessageListener {
                                     + machine.getState().toString().toLowerCase(), Notification.Type.TRAY_NOTIFICATION);
                             }
                             MyUI.this.machineView.updateMachine(machine);
+                        } else if (event.getResource() instanceof MachineImage) {
+                            MachineImage image = (MachineImage) event.getResource();
+                            if (!image.getState().toString().endsWith("ING")) {
+                                Notification.show("Image " + image.getName() + " " + image.getState().toString().toLowerCase(),
+                                    Notification.Type.TRAY_NOTIFICATION);
+                            }
+                            MyUI.this.machineImageView.updateMachineImage(image);
                         } else if (event.getResource() instanceof Volume) {
                             Volume volume = (Volume) event.getResource();
                             if (!volume.getState().toString().endsWith("ING")) {
