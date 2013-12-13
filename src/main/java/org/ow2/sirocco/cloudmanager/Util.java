@@ -27,6 +27,8 @@ import java.io.StringWriter;
 
 import org.ow2.sirocco.cloudmanager.core.api.ICloudProviderManager;
 import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
+import org.ow2.sirocco.cloudmanager.core.api.exception.ResourceConflictException;
+import org.ow2.sirocco.cloudmanager.core.api.exception.ResourceNotFoundException;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProviderAccount;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProviderLocation;
 import org.vaadin.teemu.wizards.Wizard;
@@ -270,12 +272,18 @@ public class Util {
     }
 
     public static void diplayErrorMessageBox(final String message, final Exception e) {
-        Panel p = new Panel();
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        e.printStackTrace(pw);
-        p.setContent(new Label(sw.toString()));
-        MessageBox mb = MessageBox.showCustomized(Icon.ERROR, message, p, ButtonId.OK).setWidth("700px").setHeight("350px");
+        if (e instanceof ResourceConflictException) {
+            MessageBox.showPlain(Icon.ERROR, "Resource Conflict", e.getMessage(), ButtonId.OK);
+        } else if (e instanceof ResourceNotFoundException) {
+            MessageBox.showPlain(Icon.ERROR, "Resource Not found", e.getMessage(), ButtonId.OK);
+        } else {
+            Panel p = new Panel();
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            p.setContent(new Label(sw.toString()));
+            MessageBox.showCustomized(Icon.ERROR, message, p, ButtonId.OK).setWidth("700px").setHeight("350px");
+        }
     }
 
 }
