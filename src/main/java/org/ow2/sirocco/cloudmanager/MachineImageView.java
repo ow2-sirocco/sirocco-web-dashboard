@@ -327,14 +327,22 @@ public class MachineImageView extends VerticalSplitPanel implements ValueChangeL
         }
 
         public String providerFrom(final MachineImage machineImage) {
-            ProviderMapping mapping = machineImage.getProviderMappings().get(0);
-            return mapping.getProviderAccount().getCloudProvider().getDescription();
+            if (machineImage.getProviderMappings() != null && !machineImage.getProviderMappings().isEmpty()) {
+                ProviderMapping mapping = machineImage.getProviderMappings().get(0);
+                return mapping.getProviderAccount().getCloudProvider().getDescription();
+            } else {
+                return "";
+            }
         }
 
         public String locationFrom(final MachineImage machineImage) {
-            ProviderMapping mapping = machineImage.getProviderMappings().get(0);
-            if (mapping.getProviderLocation() != null) {
-                return mapping.getProviderLocation().description(true);
+            if (machineImage.getProviderMappings() != null && !machineImage.getProviderMappings().isEmpty()) {
+                ProviderMapping mapping = machineImage.getProviderMappings().get(0);
+                if (mapping.getProviderLocation() != null) {
+                    return mapping.getProviderLocation().description(true);
+                } else {
+                    return "";
+                }
             } else {
                 return "";
             }
