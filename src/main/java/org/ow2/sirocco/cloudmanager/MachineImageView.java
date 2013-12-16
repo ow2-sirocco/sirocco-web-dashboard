@@ -100,10 +100,17 @@ public class MachineImageView extends VerticalSplitPanel implements ValueChangeL
             @Override
             public void buttonClick(final ClickEvent event) {
                 final Set<?> selectedImageIds = (Set<?>) MachineImageView.this.machineImageTable.getValue();
+                StringBuilder sb = new StringBuilder();
+                sb.append("Are you sure you want to delete ");
+                if (selectedImageIds.size() == 1) {
+                    Object id = selectedImageIds.iterator().next();
+                    sb.append("image " + MachineImageView.this.images.getItem(id).getBean().getName() + " ?");
+                } else {
+                    sb.append(" these " + selectedImageIds.size() + " images ?");
+                }
                 String name = MachineImageView.this.images.getItem(selectedImageIds.iterator().next()).getBean().getName();
-                ConfirmDialog confirmDialog = ConfirmDialog.newConfirmDialogWithOption("Delete Image",
-                    "Are you sure you want to delete image " + name + " ?", "delete image on provider",
-                    new ConfirmDialog.ConfirmationDialogCallback() {
+                ConfirmDialog confirmDialog = ConfirmDialog.newConfirmDialogWithOption("Delete Image", sb.toString(),
+                    "delete image on provider", new ConfirmDialog.ConfirmationDialogCallback() {
 
                         @Override
                         public void response(final boolean ok, final boolean deleteOnProvider) {
