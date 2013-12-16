@@ -318,7 +318,7 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
 
         public String locationFrom(final Network network) {
             if (network.getLocation() != null) {
-                return network.getLocation().getIso3166_1();
+                return network.getLocation().description(true);
             } else {
                 return "";
             }

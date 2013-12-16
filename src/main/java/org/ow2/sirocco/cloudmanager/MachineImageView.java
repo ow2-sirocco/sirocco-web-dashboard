@@ -334,7 +334,7 @@ public class MachineImageView extends VerticalSplitPanel implements ValueChangeL
         public String locationFrom(final MachineImage machineImage) {
             ProviderMapping mapping = machineImage.getProviderMappings().get(0);
             if (mapping.getProviderLocation() != null) {
-                return mapping.getProviderLocation().getIso3166_1();
+                return mapping.getProviderLocation().description(true);
             } else {
                 return "";
             }

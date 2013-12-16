@@ -177,7 +177,7 @@ public class MachineImageDetailView extends VerticalLayout implements MetadataVi
         this.addAttribute("provider account id", machineImage.getProviderMappings().get(0).getProviderAccount().getUuid(),
             false);
         this.addAttribute("provider-assigned id", machineImage.getProviderMappings().get(0).getProviderAssignedId(), false);
-        this.addAttribute("location", machineImage.getProviderMappings().get(0).getProviderLocation().getCountryName(), false);
+        this.addAttribute("location", machineImage.getProviderMappings().get(0).getProviderLocation().description(false), false);
 
         this.metadataView.init(machineImage.getProperties());
 

@@ -427,7 +427,7 @@ public class VolumeView extends VerticalLayout implements ValueChangeListener {
 
         public String locationFrom(final Volume volume) {
             if (volume.getLocation() != null) {
-                return volume.getLocation().getIso3166_1();
+                return volume.getLocation().description(true);
             } else {
                 return "";
             }

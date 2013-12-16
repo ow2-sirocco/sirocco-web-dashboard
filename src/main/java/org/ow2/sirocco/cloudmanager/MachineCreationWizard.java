@@ -23,6 +23,7 @@
 package org.ow2.sirocco.cloudmanager;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -193,7 +194,7 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
         try {
             for (MachineImage image : this.machineImageManager.getMachineImages()) {
                 ProviderMapping mapping = ProviderMapping.find(image, this.getSelectedProviderAccountId(),
-                    this.getSelectedCountry());
+                    this.getLocationConstraint());
                 if (mapping == null) {
                     continue;
                 }
@@ -204,25 +205,31 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
             Util.diplayErrorMessageBox("Internal error", e);
         }
         this.configStep.configBox.removeAllItems();
+        List<MachineConfiguration> configs = new ArrayList<>();
         try {
             for (MachineConfiguration config : this.machineManager.getMachineConfigurations().getItems()) {
                 ProviderMapping mapping = ProviderMapping.find(config, this.getSelectedProviderAccountId(),
-                    this.getSelectedCountry());
+                    this.getLocationConstraint());
                 if (mapping == null) {
                     continue;
                 }
-                this.configStep.configBox.addItem(config.getUuid());
-                this.configStep.configBox.setItemCaption(config.getUuid(), config.getName());
+                configs.add(config);
             }
         } catch (CloudProviderException e) {
             Util.diplayErrorMessageBox("Internal error", e);
         }
+        Collections.sort(configs);
+        for (MachineConfiguration config : configs) {
+            this.configStep.configBox.addItem(config.getUuid());
+            this.configStep.configBox.setItemCaption(config.getUuid(), config.getName());
+        }
+
         this.networkStep.nics.removeAllItems();
         this.networkStep.nets.removeAllItems();
         try {
             for (Network net : this.networkManager.getNetworks().getItems()) {
                 if (net.getCloudProviderAccount().getUuid().equals(this.getSelectedProviderAccountId())
-                    && net.getLocation().getCountryName().equals(this.getSelectedCountry())) {
+                    && net.getLocation().matchLocationConstraint(this.getLocationConstraint())) {
                     this.networkStep.nets.addBean(new NetBean(net));
                 }
             }
@@ -246,7 +253,7 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
         return (String) MachineCreationWizard.this.placementStep.providerBox.getValue();
     }
 
-    private String getSelectedCountry() {
+    private String getLocationConstraint() {
         return (String) MachineCreationWizard.this.placementStep.locationBox.getValue();
     }
 
@@ -260,7 +267,7 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
         try {
             String accountId = this.getSelectedProviderAccountId();
             machineCreate.setProviderAccountId(accountId);
-            machineCreate.setLocation(this.getSelectedCountry());
+            machineCreate.setLocation(this.getLocationConstraint());
             machineCreate.setName(MachineCreationWizard.this.metadataStep.nameField.getValue());
             machineCreate.setDescription(MachineCreationWizard.this.metadataStep.descriptionField.getValue());
             if (machineCreate.getDescription().isEmpty()) {

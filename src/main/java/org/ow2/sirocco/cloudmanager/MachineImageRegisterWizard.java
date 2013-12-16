@@ -138,9 +138,9 @@ public class MachineImageRegisterWizard extends Window implements WizardProgress
     }
 
     private CloudProviderLocation getSelectedLocation(final CloudProviderAccount account) {
-        String country = (String) MachineImageRegisterWizard.this.placementStep.locationBox.getValue();
+        String locationConstraint = (String) MachineImageRegisterWizard.this.placementStep.locationBox.getValue();
         for (CloudProviderLocation loc : account.getCloudProvider().getCloudProviderLocations()) {
-            if (country.equalsIgnoreCase(loc.getCountryName())) {
+            if (loc.matchLocationConstraint(locationConstraint)) {
                 return loc;
             }
         }

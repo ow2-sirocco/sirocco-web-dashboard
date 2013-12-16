@@ -102,12 +102,15 @@ public class Util {
     public static class LocationColumnGenerator implements Table.ColumnGenerator {
         public com.vaadin.ui.Component generateCell(final Table source, final Object itemId, final Object columnId) {
             Property<?> prop = source.getItem(itemId).getItemProperty(columnId);
-            String country = (String) prop.getValue();
+            String location = (String) prop.getValue();
+            String countryAndRegion[] = location.split(" ", 2);
+            String country = countryAndRegion[0];
+            String region = countryAndRegion.length > 1 ? countryAndRegion[1] : "";
             Label label = new Label();
             if (country != null && !country.isEmpty()) {
                 String iconFile = country.toLowerCase() + ".gif";
                 label.setContentMode(ContentMode.HTML);
-                label.setValue("<img src=\"" + "VAADIN/themes/mytheme/img/flags/" + iconFile + "\" /> ");
+                label.setValue("<img src=\"" + "VAADIN/themes/mytheme/img/flags/" + iconFile + "\" /> " + region);
             }
             return label;
         }
@@ -147,11 +150,13 @@ public class Util {
                                 .getCloudProviderAccountByUuid(accountId);
                             for (CloudProviderLocation location : providerAccount.getCloudProvider()
                                 .getCloudProviderLocations()) {
-                                PlacementStep.this.locationBox.addItem(location.getCountryName());
+                                PlacementStep.this.locationBox.addItem(location.toShortString());
+                                PlacementStep.this.locationBox.setItemCaption(location.toShortString(),
+                                    location.description(false));
                             }
                             if (PlacementStep.this.locationBox.getItemIds().size() == 1) {
                                 PlacementStep.this.locationBox.setValue(providerAccount.getCloudProvider()
-                                    .getCloudProviderLocations().iterator().next().getCountryName());
+                                    .getCloudProviderLocations().iterator().next().toShortString());
                             }
                         } catch (CloudProviderException e) {
                             e.printStackTrace();

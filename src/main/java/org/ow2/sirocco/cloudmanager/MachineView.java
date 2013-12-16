@@ -492,7 +492,7 @@ public class MachineView extends VerticalSplitPanel implements ValueChangeListen
 
         public String locationFrom(final Machine machine) {
             if (machine.getLocation() != null) {
-                return machine.getLocation().getIso3166_1().toLowerCase();
+                return machine.getLocation().description(true);
             } else {
                 return "";
             }

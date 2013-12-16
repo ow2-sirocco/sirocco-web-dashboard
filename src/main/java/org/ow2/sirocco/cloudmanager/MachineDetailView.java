@@ -199,7 +199,7 @@ public class MachineDetailView extends VerticalLayout implements MetadataView.Ca
         this.addAttribute("provider", machine.getCloudProviderAccount().getCloudProvider().getDescription(), false);
         this.addAttribute("provider account id", machine.getCloudProviderAccount().getUuid(), false);
         this.addAttribute("provider-assigned id", machine.getProviderAssignedId(), false);
-        this.addAttribute("location", machine.getLocation().getCountryName(), false);
+        this.addAttribute("location", machine.getLocation().description(false), false);
 
         this.metadataView.init(machine.getProperties());
 
