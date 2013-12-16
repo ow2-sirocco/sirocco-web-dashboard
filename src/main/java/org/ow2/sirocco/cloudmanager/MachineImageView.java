@@ -161,6 +161,7 @@ public class MachineImageView extends VerticalSplitPanel implements ValueChangeL
     }
 
     void refresh() {
+        this.machineImageTable.setValue(null);
         this.machineImageTable.getContainerDataSource().removeAllItems();
         try {
             for (MachineImage machineImage : this.machineImageManager.getMachineImages()) {
