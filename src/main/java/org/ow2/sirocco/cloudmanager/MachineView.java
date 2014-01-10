@@ -460,7 +460,7 @@ public class MachineView extends VerticalSplitPanel implements ValueChangeListen
                 for (MachineNetworkInterface nic : machine.getNetworkInterfaces()) {
                     if (nic.getAddresses() != null && !nic.getAddresses().isEmpty()) {
                         // sb.append(nic.getNetwork().getNetworkType() + " ");
-                        if (nic.getAddresses().size() == 2) {
+                        if (nic.getAddresses().size() >= 2) {
                             sb.append("PUBLIC " + nic.getAddresses().get(1).getAddress().getIp() + "\n");
                             sb.append("PRIVATE " + nic.getAddresses().get(0).getAddress().getIp());
                         } else {
