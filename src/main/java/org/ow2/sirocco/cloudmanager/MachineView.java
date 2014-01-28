@@ -32,6 +32,7 @@ import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
 import org.ow2.sirocco.cloudmanager.model.cimi.Machine;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineDisk;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineNetworkInterface;
+import org.ow2.sirocco.cloudmanager.model.cimi.MachineNetworkInterfaceAddress;
 
 import com.vaadin.cdi.UIScoped;
 import com.vaadin.data.Property;
@@ -457,16 +458,19 @@ public class MachineView extends VerticalSplitPanel implements ValueChangeListen
         public String addressesFrom(final Machine machine) {
             StringBuilder sb = new StringBuilder();
             if (machine.getNetworkInterfaces() != null) {
+                int nicIndex = 0;
                 for (MachineNetworkInterface nic : machine.getNetworkInterfaces()) {
                     if (nic.getAddresses() != null && !nic.getAddresses().isEmpty()) {
-                        // sb.append(nic.getNetwork().getNetworkType() + " ");
-                        if (nic.getAddresses().size() >= 2) {
-                            sb.append("PUBLIC " + nic.getAddresses().get(1).getAddress().getIp() + "\n");
-                            sb.append("PRIVATE " + nic.getAddresses().get(0).getAddress().getIp());
-                        } else {
-                            sb.append("PRIVATE " + nic.getAddresses().get(0).getAddress().getIp());
+                        String networkName = nic.getNetwork() != null ? nic.getNetwork().getName() : "";
+                        if (nicIndex > 0) {
+                            sb.append("\n");
+                        }
+                        sb.append(networkName + " ");
+                        for (MachineNetworkInterfaceAddress addr : nic.getAddresses()) {
+                            sb.append(addr.getAddress().getIp() + " ");
                         }
                     }
+                    nicIndex++;
                 }
             }
             return sb.toString();
