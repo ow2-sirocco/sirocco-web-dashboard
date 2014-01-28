@@ -302,7 +302,7 @@ public class NetworkView extends VerticalLayout implements ValueChangeListener {
             StringBuilder sb = new StringBuilder();
             if (network.getSubnets() != null) {
                 for (Subnet subnet : network.getSubnets()) {
-                    sb.append(subnet.getName() + " " + subnet.getCidr() + "\n");
+                    sb.append((subnet.getName() != null ? subnet.getName() : "") + " " + subnet.getCidr() + "\n");
                 }
             }
             return sb.toString();
