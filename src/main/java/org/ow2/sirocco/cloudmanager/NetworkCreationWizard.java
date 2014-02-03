@@ -38,7 +38,7 @@ import org.ow2.sirocco.cloudmanager.model.cimi.Network.Type;
 import org.ow2.sirocco.cloudmanager.model.cimi.NetworkConfiguration;
 import org.ow2.sirocco.cloudmanager.model.cimi.NetworkCreate;
 import org.ow2.sirocco.cloudmanager.model.cimi.NetworkTemplate;
-import org.ow2.sirocco.cloudmanager.model.cimi.Subnet;
+import org.ow2.sirocco.cloudmanager.model.cimi.SubnetConfig;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProviderAccount;
 import org.vaadin.teemu.wizards.Wizard;
 import org.vaadin.teemu.wizards.WizardStep;
@@ -163,11 +163,11 @@ public class NetworkCreationWizard extends Window implements WizardProgressListe
             NetworkTemplate networkTemplate = new NetworkTemplate();
             NetworkConfiguration networkConfig = new NetworkConfiguration();
             networkConfig.setNetworkType(Type.PRIVATE);
-            Subnet subnet = new Subnet();
+            SubnetConfig subnet = new SubnetConfig();
             subnet.setName(this.subnetStep.nameField.getValue());
             subnet.setCidr(this.subnetStep.cidrField.getValue());
             subnet.setEnableDhcp(this.subnetStep.enableDhcp.getValue());
-            List<Subnet> subnets = Collections.singletonList(subnet);
+            List<SubnetConfig> subnets = Collections.singletonList(subnet);
             networkConfig.setSubnets(subnets);
             networkTemplate.setNetworkConfig(networkConfig);
 
