@@ -38,6 +38,7 @@ import org.ow2.sirocco.cloudmanager.core.api.IUserManager;
 import org.ow2.sirocco.cloudmanager.core.api.IdentityContext;
 import org.ow2.sirocco.cloudmanager.core.api.ResourceStateChangeEvent;
 import org.ow2.sirocco.cloudmanager.core.api.exception.CloudProviderException;
+import org.ow2.sirocco.cloudmanager.model.cimi.Address;
 import org.ow2.sirocco.cloudmanager.model.cimi.Machine;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineImage;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineVolume;
@@ -89,6 +90,9 @@ public class MyUI extends UI implements MessageListener {
 
     @Inject
     private NetworkView networkView;
+
+    @Inject
+    private AddressView addressView;
 
     @Inject
     private CloudProviderView providerView;
@@ -267,6 +271,8 @@ public class MyUI extends UI implements MessageListener {
 
     private static final String NETWORKS_MENU_ITEM_ID = "Networks";
 
+    private static final String ADDRESSES_MENU_ITEM_ID = "External IP Addresses";
+
     private static final String SECURITY_MENU_ITEM_ID = "Security";
 
     private static final String KEYPAIRS_MENU_ITEM_ID = "KeyPairs";
@@ -307,6 +313,10 @@ public class MyUI extends UI implements MessageListener {
         resourceTree.setItemIcon(MyUI.NETWORKS_MENU_ITEM_ID, new ThemeResource("img/network.png"));
         resourceTree.setChildrenAllowed(MyUI.NETWORKS_MENU_ITEM_ID, false);
         // resourceTree.setParent(MyUI.NETWORKS_MENU_ITEM_ID, MyUI.NETWORKING_MENU_ITEM_ID);
+
+        resourceTree.addItem(MyUI.ADDRESSES_MENU_ITEM_ID);
+        resourceTree.setItemIcon(MyUI.ADDRESSES_MENU_ITEM_ID, new ThemeResource("img/ip-icon.png"));
+        resourceTree.setChildrenAllowed(MyUI.ADDRESSES_MENU_ITEM_ID, false);
 
         // resourceTree.addItem(MyUI.SECURITY_MENU_ITEM_ID);
 
@@ -352,6 +362,10 @@ public class MyUI extends UI implements MessageListener {
                         case NETWORKS_MENU_ITEM_ID:
                             MyUI.this.inventoryContainer.replaceComponent(MyUI.this.inventoryContainer.getComponent(0),
                                 MyUI.this.networkView);
+                            break;
+                        case ADDRESSES_MENU_ITEM_ID:
+                            MyUI.this.inventoryContainer.replaceComponent(MyUI.this.inventoryContainer.getComponent(0),
+                                MyUI.this.addressView);
                             break;
                         case KEYPAIRS_MENU_ITEM_ID:
                             MyUI.this.inventoryContainer.replaceComponent(MyUI.this.inventoryContainer.getComponent(0),
@@ -441,6 +455,9 @@ public class MyUI extends UI implements MessageListener {
                                     + network.getState().toString().toLowerCase(), Notification.Type.TRAY_NOTIFICATION);
                             }
                             MyUI.this.networkView.updateNetwork(network);
+                        } else if (event.getResource() instanceof Address) {
+                            Address address = (Address) event.getResource();
+                            MyUI.this.addressView.updateAddress(address);
                         }
                         MyUI.this.push();
                     }
