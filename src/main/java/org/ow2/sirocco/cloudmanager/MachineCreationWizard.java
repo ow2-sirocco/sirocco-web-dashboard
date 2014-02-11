@@ -437,7 +437,7 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
             this.nicTable.setPageLength(4);
             this.nicTable.setSelectable(true);
             this.nicTable.setImmediate(true);
-            this.nicTable.setVisibleColumns("network", "type");
+            this.nicTable.setVisibleColumns("network");
             this.nicTable.setWidth("100%");
             this.nicTable.setDropHandler(new DropHandler() {
 
@@ -477,7 +477,7 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
             this.netTable.setPageLength(4);
             this.netTable.setSelectable(true);
             this.netTable.setImmediate(true);
-            this.netTable.setVisibleColumns("network", "type");
+            this.netTable.setVisibleColumns("network");
             this.netTable.setWidth("100%");
             this.netTable.setDragMode(TableDragMode.ROW);
             this.content.addComponent(this.netTable);
@@ -607,15 +607,12 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
 
         String network;
 
-        String type;
-
         Network net;
 
         NicBean(final Network net) {
             this.net = net;
             this.id = net.getUuid();
             this.network = net.getName();
-            this.type = net.getNetworkType().toString();
         }
 
         public String getId() {
@@ -626,9 +623,6 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
             return this.network;
         }
 
-        public String getType() {
-            return this.type;
-        }
     }
 
     public static class NetBean {
@@ -636,15 +630,12 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
 
         String network;
 
-        String type;
-
         Network net;
 
         NetBean(final Network net) {
             this.net = net;
             this.id = net.getUuid();
             this.network = net.getName();
-            this.type = net.getNetworkType().toString();
         }
 
         public String getId() {
@@ -655,9 +646,6 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
             return this.network;
         }
 
-        public String getType() {
-            return this.type;
-        }
     }
 
 }
