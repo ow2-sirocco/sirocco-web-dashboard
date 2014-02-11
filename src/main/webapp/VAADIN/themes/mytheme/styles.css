@@ -7071,3 +7071,8 @@ body .mytheme.v-app .v-app-loading {
 .mytheme .metadata-table .v-table-cell-content {
    vertical-align: middle;
 }
+
+.mytheme .errorMsg {
+	color: red;
+}
+}

@@ -45,6 +45,7 @@ import org.ow2.sirocco.cloudmanager.model.cimi.MachineVolume;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineVolume.State;
 import org.ow2.sirocco.cloudmanager.model.cimi.Network;
 import org.ow2.sirocco.cloudmanager.model.cimi.Volume;
+import org.ow2.sirocco.cloudmanager.model.cimi.extension.SecurityGroup;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.Tenant;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.User;
 
@@ -93,6 +94,9 @@ public class MyUI extends UI implements MessageListener {
 
     @Inject
     private AddressView addressView;
+
+    @Inject
+    private SecurityGroupView secGroupView;
 
     @Inject
     private CloudProviderView providerView;
@@ -273,6 +277,8 @@ public class MyUI extends UI implements MessageListener {
 
     private static final String ADDRESSES_MENU_ITEM_ID = "External IP Addresses";
 
+    private static final String SECURITY_GROUP_MENU_ITEM_ID = "Security Groups";
+
     private static final String SECURITY_MENU_ITEM_ID = "Security";
 
     private static final String KEYPAIRS_MENU_ITEM_ID = "KeyPairs";
@@ -317,6 +323,10 @@ public class MyUI extends UI implements MessageListener {
         resourceTree.addItem(MyUI.ADDRESSES_MENU_ITEM_ID);
         resourceTree.setItemIcon(MyUI.ADDRESSES_MENU_ITEM_ID, new ThemeResource("img/ip-icon.png"));
         resourceTree.setChildrenAllowed(MyUI.ADDRESSES_MENU_ITEM_ID, false);
+
+        resourceTree.addItem(MyUI.SECURITY_GROUP_MENU_ITEM_ID);
+        resourceTree.setItemIcon(MyUI.SECURITY_GROUP_MENU_ITEM_ID, new ThemeResource("img/secgroup.png"));
+        resourceTree.setChildrenAllowed(MyUI.SECURITY_GROUP_MENU_ITEM_ID, false);
 
         // resourceTree.addItem(MyUI.SECURITY_MENU_ITEM_ID);
 
@@ -366,6 +376,10 @@ public class MyUI extends UI implements MessageListener {
                         case ADDRESSES_MENU_ITEM_ID:
                             MyUI.this.inventoryContainer.replaceComponent(MyUI.this.inventoryContainer.getComponent(0),
                                 MyUI.this.addressView);
+                            break;
+                        case SECURITY_GROUP_MENU_ITEM_ID:
+                            MyUI.this.inventoryContainer.replaceComponent(MyUI.this.inventoryContainer.getComponent(0),
+                                MyUI.this.secGroupView);
                             break;
                         case KEYPAIRS_MENU_ITEM_ID:
                             MyUI.this.inventoryContainer.replaceComponent(MyUI.this.inventoryContainer.getComponent(0),
@@ -458,6 +472,9 @@ public class MyUI extends UI implements MessageListener {
                         } else if (event.getResource() instanceof Address) {
                             Address address = (Address) event.getResource();
                             MyUI.this.addressView.updateAddress(address);
+                        } else if (event.getResource() instanceof SecurityGroup) {
+                            SecurityGroup secGroup = (SecurityGroup) event.getResource();
+                            MyUI.this.secGroupView.updateSecurityGroup(secGroup);
                         }
                         MyUI.this.push();
                     }
