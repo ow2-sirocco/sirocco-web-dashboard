@@ -204,7 +204,7 @@ public class NetworkCreationWizard extends Window implements WizardProgressListe
 
             this.nameField = new TextField("Name");
             this.nameField.setImmediate(true);
-            this.nameField.setRequired(true);
+            this.nameField.setRequired(false);
             this.content.addComponent(this.nameField);
             this.nameField.addValueChangeListener(new Property.ValueChangeListener() {
 
@@ -243,7 +243,7 @@ public class NetworkCreationWizard extends Window implements WizardProgressListe
 
         @Override
         public boolean onAdvance() {
-            return !this.nameField.getValue().isEmpty() && this.cidrField.getValue() != null;
+            return this.cidrField.getValue() != null;
             // TODO parse and check cidr field
         }
 
