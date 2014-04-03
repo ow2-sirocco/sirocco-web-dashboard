@@ -194,8 +194,12 @@ public class MachineDetailView extends VerticalLayout implements MetadataView.Ca
                 nicIndex++;
             }
         }
-        this.addAttribute("image", machine.getImage().getName(), false);
-        this.addAttribute("config", machine.getConfig().getName(), false);
+        if (machine.getImage() != null) {
+            this.addAttribute("image", machine.getImage().getName(), false);
+        }
+        if (machine.getConfig() != null) {
+            this.addAttribute("config", machine.getConfig().getName(), false);
+        }
         this.addAttribute("provider", machine.getCloudProviderAccount().getCloudProvider().getDescription(), false);
         this.addAttribute("provider account id", machine.getCloudProviderAccount().getUuid(), false);
         this.addAttribute("provider-assigned id", machine.getProviderAssignedId(), false);
