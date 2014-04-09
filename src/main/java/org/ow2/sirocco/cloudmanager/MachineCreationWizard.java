@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -46,6 +47,7 @@ import org.ow2.sirocco.cloudmanager.model.cimi.MachineTemplate;
 import org.ow2.sirocco.cloudmanager.model.cimi.MachineTemplateNetworkInterface;
 import org.ow2.sirocco.cloudmanager.model.cimi.Network;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.CloudProviderAccount;
+import org.ow2.sirocco.cloudmanager.model.cimi.extension.PlacementHint;
 import org.ow2.sirocco.cloudmanager.model.cimi.extension.ProviderMapping;
 import org.vaadin.teemu.wizards.Wizard;
 import org.vaadin.teemu.wizards.WizardStep;
@@ -74,6 +76,7 @@ import com.vaadin.ui.Table;
 import com.vaadin.ui.Table.TableDragMode;
 import com.vaadin.ui.Table.TableTransferable;
 import com.vaadin.ui.TextArea;
+import com.vaadin.ui.TwinColSelect;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
@@ -102,6 +105,8 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
     private KeyPairStep keyPairStep;
 
     private UserDataStep userDataStep;
+
+    private HostPlacementStep hostPlacementStep;
 
     @Inject
     private ICloudProviderManager providerManager;
@@ -143,8 +148,9 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
         this.wizard.addStep(this.networkStep = new NetworkStep(), "Network");
         this.wizard.addStep(this.keyPairStep = new KeyPairStep(), "Key pair");
         this.wizard.addStep(this.userDataStep = new UserDataStep(), "User data");
+        this.wizard.addStep(this.hostPlacementStep = new HostPlacementStep(), "Placement Constraints");
         this.wizard.setHeight("300px");
-        this.wizard.setWidth("560px");
+        this.wizard.setWidth("700px");
 
         content.addComponent(this.wizard);
         content.setComponentAlignment(this.wizard, Alignment.TOP_CENTER);
@@ -236,6 +242,19 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
         } catch (CloudProviderException e) {
             Util.diplayErrorMessageBox("Internal error", e);
         }
+
+        this.hostPlacementStep.machineSelect.removeAllItems();
+        try {
+            for (Machine machine : this.machineManager.getMachines().getItems()) {
+                if (machine.getCloudProviderAccount().getUuid().equals(this.getSelectedProviderAccountId())
+                    && machine.getLocation().matchLocationConstraint(this.getLocationConstraint())) {
+                    this.hostPlacementStep.machineSelect.addItem(machine.getUuid());
+                    this.hostPlacementStep.machineSelect.setItemCaption(machine.getUuid(), machine.getName());
+                }
+            }
+        } catch (CloudProviderException e) {
+            Util.diplayErrorMessageBox("Internal error", e);
+        }
     }
 
     @Override
@@ -300,6 +319,23 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
             machineTemplate.setUserData(MachineCreationWizard.this.userDataStep.userDataField.getValue());
             if (machineTemplate.getUserData().isEmpty()) {
                 machineTemplate.setUserData(null);
+            }
+
+            String placementConstraint = (String) this.hostPlacementStep.constraintBox.getValue();
+            if (!placementConstraint.equals("NONE")) {
+                PlacementHint placementHint = new PlacementHint();
+                switch (placementConstraint) {
+                case "AFFINITY":
+                    placementHint.setPlacementConstraint(PlacementHint.AFFINITY_CONSTRAINT);
+                    break;
+                case "ANTI AFFINITY":
+                    placementHint.setPlacementConstraint(PlacementHint.ANTI_AFFINITY_CONSTRAINT);
+                    break;
+                }
+                @SuppressWarnings("unchecked")
+                Set<String> selectedMachineIds = (Set<String>) this.hostPlacementStep.machineSelect.getValue();
+                placementHint.setMachineIds(new ArrayList<String>(selectedMachineIds));
+                machineTemplate.setPlacementHint(placementHint);
             }
 
             machineCreate.setMachineTemplate(machineTemplate);
@@ -600,6 +636,71 @@ public class MachineCreationWizard extends Window implements WizardProgressListe
             return true;
         }
 
+    }
+
+    private class HostPlacementStep implements WizardStep {
+        VerticalLayout content;
+
+        ComboBox constraintBox;
+
+        TwinColSelect machineSelect;
+
+        HostPlacementStep() {
+            this.content = new VerticalLayout();
+            // this.content.setSizeFull();
+            this.content.setMargin(true);
+            // this.content.setSpacing(true);
+
+            this.constraintBox = new ComboBox("Placement rule");
+            this.constraintBox.setTextInputAllowed(false);
+            this.constraintBox.setNullSelectionAllowed(false);
+            // this.constraintBox.setInputPrompt("select constraint");
+            this.constraintBox.setImmediate(true);
+
+            this.content.addComponent(this.constraintBox);
+            this.constraintBox.addItem("NONE");
+            this.constraintBox.addItem("AFFINITY");
+            this.constraintBox.addItem("ANTI AFFINITY");
+            this.constraintBox.setValue("NONE");
+
+            this.machineSelect = new TwinColSelect("");
+            this.machineSelect.setEnabled(false);
+            this.machineSelect.setLeftColumnCaption("Available machines");
+            this.machineSelect.setRightColumnCaption("Placement rule members");
+            // this.machineSelect.setHeight("200px");
+            this.machineSelect.setRows(5);
+            this.machineSelect.setWidth("100%");
+            this.content.addComponent(this.machineSelect);
+
+            this.constraintBox.addValueChangeListener(new Property.ValueChangeListener() {
+                @Override
+                public void valueChange(final ValueChangeEvent event) {
+                    HostPlacementStep.this.machineSelect.setEnabled(HostPlacementStep.this.constraintBox.getValue() != null
+                        && !HostPlacementStep.this.constraintBox.getValue().equals("NONE"));
+                }
+            });
+
+        }
+
+        @Override
+        public Component getContent() {
+            return this.content;
+        }
+
+        @Override
+        public String getCaption() {
+            return "Placement";
+        }
+
+        @Override
+        public boolean onAdvance() {
+            return true;
+        }
+
+        @Override
+        public boolean onBack() {
+            return true;
+        }
     }
 
     public static class NicBean {
