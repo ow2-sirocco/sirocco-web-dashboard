@@ -322,7 +322,7 @@ public class MachineView extends VerticalSplitPanel implements ValueChangeListen
             item.getItemProperty("state").setValue(machineBean.getState());
             item.getItemProperty("addresses").setValue(machineBean.getAddresses());
             item.getItemProperty("name").setValue(machineBean.getName());
-            if (this.detailView.getMachine().getUuid().equals(machine.getUuid())) {
+            if (this.detailView.focusOnMachine(machine.getUuid())) {
                 this.detailView.update(machineBean);
             }
             this.valueChange(null);

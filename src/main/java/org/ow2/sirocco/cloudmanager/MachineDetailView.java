@@ -150,6 +150,10 @@ public class MachineDetailView extends VerticalLayout implements MetadataView.Ca
         return this.machineBean.machine;
     }
 
+    public boolean focusOnMachine(final String machineUuid) {
+        return this.machineBean != null && this.machineBean.machine.getUuid().equals(machineUuid);
+    }
+
     public void update(final MachineBean machineBean) {
         this.setVisible(true);
         this.machineBean = machineBean;
