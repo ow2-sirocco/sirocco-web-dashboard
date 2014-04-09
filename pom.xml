@@ -32,7 +32,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<vaadin.version>7.1.4</vaadin.version>
+		<vaadin.version>7.1.13</vaadin.version>
 		<vaadin.plugin.version>${vaadin.version}</vaadin.plugin.version>
 		<cloudmanager.version>0.6.1-SNAPSHOT</cloudmanager.version>
 	</properties>
@@ -248,6 +248,7 @@
 			<plugin>
   				<groupId>org.zeroturnaround</groupId>
   				<artifactId>jrebel-maven-plugin</artifactId>
+				<version>1.1.5</version>
   				<executions>
     				<execution>
       					<id>generate-rebel-xml</id>
