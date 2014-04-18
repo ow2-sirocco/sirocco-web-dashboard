@@ -152,7 +152,7 @@ public class SecurityGroupDetailView extends VerticalLayout implements MetadataV
         this.setVisible(true);
         this.securityGroupBean = securityGroupBean;
         SecurityGroup securityGroup = securityGroupBean.securityGroup;
-        this.title.setValue("Image " + securityGroup.getName());
+        this.title.setValue("Security Group " + securityGroup.getName());
         this.attributeTable.getContainerDataSource().removeAllItems();
         this.index = 1;
         this.addAttribute("name", securityGroupBean.getName(), true);
