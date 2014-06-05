@@ -149,6 +149,10 @@ public class MachineImageDetailView extends VerticalLayout implements MetadataVi
         return this.machineImageBean.machineImage;
     }
 
+    public boolean focusOnMachineImage(final String machineImageUuid) {
+        return this.machineImageBean != null && this.machineImageBean.machineImage.getUuid().equals(machineImageUuid);
+    }
+
     public void update(final MachineImageBean machineImageBean) {
         this.setVisible(true);
         this.machineImageBean = machineImageBean;

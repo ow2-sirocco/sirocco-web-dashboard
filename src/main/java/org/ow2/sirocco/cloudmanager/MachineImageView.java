@@ -180,7 +180,7 @@ public class MachineImageView extends VerticalSplitPanel implements ValueChangeL
             machineImageBean.init(machineImage);
             item.getItemProperty("state").setValue(machineImageBean.getState());
             item.getItemProperty("name").setValue(machineImageBean.getName());
-            if (this.detailView.getMachineImage().getUuid().equals(machineImage.getUuid())) {
+            if (this.detailView.focusOnMachineImage(machineImage.getUuid())) {
                 this.detailView.update(machineImageBean);
             }
             this.valueChange(null);
